@@ -3,20 +3,29 @@
 <img src="https://killthehost.com/images/social-card.png" alt="Alt Text" width="500" height="300">
 
 A modern, open-source hosting panel for developers who want full control over servers, deployments, and infrastructure without unnecessary overhead.
-
 <div align="center">
 
 <br/>
+
+```
+ ██╗  ██╗██╗██╗     ██╗     ████████╗██╗  ██╗███████╗██╗  ██╗ ██████╗ ███████╗████████╗
+ ██║ ██╔╝██║██║     ██║        ██╔══╝██║  ██║██╔════╝██║  ██║██╔═══██╗██╔════╝╚══██╔══╝
+ █████╔╝ ██║██║     ██║        ██║   ███████║█████╗  ███████║██║   ██║███████╗   ██║   
+ ██╔═██╗ ██║██║     ██║        ██║   ██╔══██║██╔══╝  ██╔══██║██║   ██║╚════██║   ██║   
+ ██║  ██╗██║███████╗███████╗   ██║   ██║  ██║███████╗██║  ██║╚██████╔╝███████║   ██║   
+ ╚═╝  ╚═╝╚═╝╚══════╝╚══════╝   ╚═╝   ╚═╝  ╚═╝╚══════╝╚═╝  ╚═╝ ╚═════╝ ╚══════╝   ╚═╝   
+```
 
 ### **Local development → public web, without friction.**
 
 <br/>
 
-[![License: AGPL](https://img.shields.io/badge/License-MIT-blueviolet.svg?style=for-the-badge)](LICENSE)
+[![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg?style=for-the-badge)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.8+-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)](https://python.org)
 [![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Tunnels-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://cloudflare.com)
 [![Namecheap](https://img.shields.io/badge/Namecheap-Domain%20Sync-DE3723?style=for-the-badge)](https://namecheap.com)
+[![Docker](https://img.shields.io/badge/Docker-Required-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/engine/install/)
 
 <br/>
 
@@ -77,7 +86,7 @@ From localhost to a live URL in seconds — perfect for client previews, team de
 View runtime state, port, PHP version, and filesystem path for every local site. Start and stop projects from a clean interface instead of juggling terminal tabs.
 
 ### 🗄️ Database Service Management  
-See which database services are running and on which ports. Spin up or shut down PostgreSQL, MySQL, MariaDB, Redis, and MongoDB with a single click.
+Spin up or shut down **PostgreSQL, MySQL, MariaDB, Redis, and MongoDB** Docker containers with a single click. Live status is polled every 15 seconds, connection strings are always one click away, and persistent data survives container restarts — stored in `~/.db3ngin3/data/`.
 
 <br/>
 
@@ -85,34 +94,46 @@ See which database services are running and on which ports. Spin up or shut down
 
 ## 📦 Installation
 
+### Requirements
+
+| Requirement | Notes |
+|---|---|
+| **Python 3.8+** | Standard library only — no pip installs required |
+| **Docker** | Used by DB-3NGIN3 to run all database containers |
+
+**Install Docker on Ubuntu/Linux**
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+# Log out and back in before continuing
+```
+
+---
+
 **1. Download the bundle**
 
 ```bash
-# Download and unzip
 curl -L https://killthehost.com/downloads/KillTheHost-v1.0.zip -o KillTheHost.zip
 unzip KillTheHost.zip
 cd KillTheHost
 ```
 
-**2. Install dependencies**
+**2. Run PHP-MNGR**
 
 ```bash
-pip install -r requirements.txt
+python3 php-mngr.py
 ```
 
-**3. Run PHP-MNGR**
+**3. Run DB-3NGIN3**
 
 ```bash
-python php-mngr.py
+python3 db3ngin3.py
 ```
 
-**4. Run DB-3NGIN3**
+> Opens automatically at **http://127.0.0.1:7734**
 
-```bash
-python db-3ngin3.py
-```
-
-> Both tools can be run independently or together as part of the full KillTheHost workflow.
+> Both tools are single-file Python scripts with no external dependencies — no pip, no virtualenv.
 
 <br/>
 
@@ -133,6 +154,52 @@ python db-3ngin3.py
 2. Select a local project or database service
 3. Hit **Expose** — KillTheHost handles the tunnel setup
 4. Your site is now reachable at your real domain
+
+<br/>
+
+---
+
+## 🗄️ Supported Databases
+
+DB-3NGIN3 manages the following engines via Docker:
+
+| Database | Versions | Default Port | User | Password |
+|---|---|---|---|---|
+| **PostgreSQL** | 13, 14, 15, 16 | 5432 | `postgres` | `postgres` |
+| **MySQL** | 5.7, 8.0, 8.3 | 3306 | `admin` | `admin` |
+| **MariaDB** | 10.6, 10.11, 11.3 | 3307 | `root` | `root` |
+| **Redis** | 6.2, 7.0, 7.2 | 6379 | — | — |
+| **MongoDB** | 5.0, 6.0, 7.0 | 27017 | `admin` | `admin` |
+
+Port conflicts are detected automatically at instance creation time.
+
+## 📁 Data Locations
+
+| What | Where |
+|---|---|
+| Instance metadata | `~/.db3ngin3/instances.json` |
+| Database files | `~/.db3ngin3/data/<instance-id>/` |
+
+Deleting an instance removes the Docker container but **preserves data files on disk**.
+
+## ⚙️ Run DB-3NGIN3 as a Background Service
+
+```ini
+# Save as ~/.config/systemd/user/db3ngin3.service
+[Unit]
+Description=DB-3NGIN3 database manager
+
+[Service]
+ExecStart=/usr/bin/python3 /path/to/db3ngin3.py
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+```
+
+```bash
+systemctl --user enable --now db3ngin3
+```
 
 <br/>
 
@@ -201,7 +268,9 @@ For major changes, please open an issue first to discuss what you'd like to chan
 
 ## 📄 License
 
-This project is licensed under the **MIT License** — see the [LICENSE](LICENSE) file for details.
+This project is licensed under the **GNU Affero General Public License v3.0 (AGPL-3.0)** — see the [LICENSE](LICENSE) file for details.
+
+Any modified versions of this software that are run over a network must also be made available as open source under the same license.
 
 <br/>
 
@@ -209,7 +278,7 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 
 <div align="center">
 
-**Built with ❤️ by the KillTheHost team**
+**Copyright © 2026 KillTheHost — Developed by PhDesigns, LLC**
 
 [killthehost.com](https://killthehost.com) &nbsp;·&nbsp; [Report a Bug](https://github.com/killthehost/killthehost/issues) &nbsp;·&nbsp; [Request a Feature](https://github.com/killthehost/killthehost/issues)
 
@@ -218,5 +287,3 @@ This project is licensed under the **MIT License** — see the [LICENSE](LICENSE
 *Stop treating localhost like a dead end.*
 
 </div>
-
-Copyright (c) 2026 KillTheHost - Developed by PhDesigns, LLC.
