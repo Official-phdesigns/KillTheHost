@@ -103,7 +103,7 @@ sudo usermod -aG docker $USER
 **1. Download the bundle**
 
 ```bash
-curl -L https://killthehost.com/downloads/KillTheHost-v1.0.zip -o KillTheHost.zip
+git clone https://github.com/Official-phdesigns/KillTheHost.git
 unzip KillTheHost.zip
 cd KillTheHost
 ```
@@ -131,11 +131,19 @@ python3 db3ngin3.py
 ## 🛠️ Usage
 
 ### Connecting a Domain
+1. Whitelist your public IP address in the Namecheap API settings to allow external requests
+2. Create a scoped API token in Cloudflare (avoid using the global API key)
+3. Assign Zone → DNS → Edit permissions to the token for the target domain
+4. Open KillTheHost and navigate to Domains & Tunnels
+5. Provide your Cloudflare API token
+6. Enter your Namecheap API credentials (API key + username)
+7. Select the desired domain and map it to your local service (port/container)
+8. Apply changes — DNS records are provisioned automatically; no manual configuration required
 
-1. Open KillTheHost and navigate to **Domain Sync**
-2. Enter your **Namecheap API key**
-3. Select a domain and assign it to a local site
-4. Done — no DNS panel needed
+### Notes
+- DNS changes typically propagate within seconds via Cloudflare, but allow up to a few minutes in edge cases
+- Ensure your local service is reachable (correct port binding / container exposure) before mapping
+- Restrict API tokens to the minimum required scope for security
 
 ### Going Live with Cloudflare
 
@@ -201,10 +209,6 @@ systemctl --user enable --now db3ngin3
 - [x] Cloudflare tunnel integration
 - [x] Namecheap domain sync
 - [ ] Additional domain registrar support (Cloudflare, GoDaddy, Porkbun...)
-- [ ] HTTPS auto-provisioning
-- [ ] Multi-site project grouping
-- [ ] GUI installer for macOS & Windows
-- [ ] Plugin/extension API
 
 <br/>
 
@@ -226,7 +230,7 @@ systemctl --user enable --now db3ngin3
 
 ![PHP-MNGR interface](https://killthehost.com/images/php.png)
 
-*Manage every PHP project with runtime info, port visibility, and one-click controls*
+*Manage & Create every PHP project with runtime info, port visibility, and Cloudflare tunneling*
 
 </div>
 
@@ -240,7 +244,7 @@ Contributions are welcome and appreciated! Here's how to get involved:
 
 ```bash
 # Fork the repo, then:
-git clone https://github.com/your-username/killthehost.git
+git clone https://github.com/Official-phdesigns/KillTheHost.git
 cd killthehost
 git checkout -b feature/your-feature-name
 ```
@@ -269,7 +273,7 @@ Any modified versions of this software that are run over a network must also be 
 
 **Copyright © 2026 KillTheHost — Developed by PhDesigns, LLC**
 
-[killthehost.com](https://killthehost.com) &nbsp;·&nbsp; [Report a Bug](https://github.com/killthehost/killthehost/issues) &nbsp;·&nbsp; [Request a Feature](https://github.com/killthehost/killthehost/issues)
+[killthehost.com](https://killthehost.com) &nbsp;·&nbsp; [Report a Bug](https://github.com/Official-phdesigns/KillTheHost/issues) &nbsp;·&nbsp; [Request a Feature](https://github.com/Official-phdesigns/KillTheHost/issues)
 
 <br/>
 
