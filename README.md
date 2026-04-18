@@ -1,4 +1,4 @@
-# KillTheHost v1.0
+## Latest Release: v1.1
 
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
@@ -364,7 +364,5 @@ Any modified versions of this software that are run over a network must also be 
 <br/>
 
 *Stop treating localhost like a dead end.*
-
-## Latest Release: v1.1
 
 </div>
