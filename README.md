@@ -1,10 +1,11 @@
 # KillTheHost v1.0
 
 <p align="center">
-  <img src="https://killthehost.com/images/social-card.png" alt="Description" width="500">
+  <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
+  
+A modern, open-source hosting panel for developers who want full control over servers, deployments, and infrastructure without unnecessary overhead.
 </p>
 
-A modern, open-source hosting panel for developers who want full control over servers, deployments, and infrastructure without unnecessary overhead.
 <div align="center">
 
 <br/>
