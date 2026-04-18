@@ -1,4 +1,4 @@
-## Latest Release: v1.1
+### Latest Release: v1.1
 
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
