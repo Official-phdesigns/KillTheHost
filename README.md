@@ -1,5 +1,5 @@
 <h1 align="center">## KillTheHost: v1.0<p>
-[Green Text]<h3 align="center">## Latest Release: v1.1<p>
+<h3 align="center">## Latest Release: v1.1<p>
 
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
