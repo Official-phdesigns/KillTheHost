@@ -317,6 +317,7 @@ Deleting an instance removes the Docker container but **preserves data files on 
 - [x] Namecheap domain sync
 - [x] Unified cross-platform launcher (v1.1)
 - [ ] Additional domain registrar support (Cloudflare, GoDaddy, Porkbun...)
+- [ ] Mail Server
 
 <br/>
 
