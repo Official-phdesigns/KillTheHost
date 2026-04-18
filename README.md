@@ -294,6 +294,7 @@ systemctl --user enable --now db3ngin3
 - [x] Cloudflare tunnel integration
 - [x] Namecheap domain sync
 - [ ] Additional domain registrar support (Cloudflare, GoDaddy, Porkbun...)
+- [ ] File Editor in Project File Manager
 
 <br/>
 
