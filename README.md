@@ -121,7 +121,7 @@ sg docker -c "python3 phpmanager.py"
 python3 db3ngin3.py
 ```
 
-> Opens automatically at **http://127.0.0.1:7734**
+> Opens automatically at **http://localhost:7734**
 
 > Both tools are single-file Python scripts with no external dependencies — no pip, no virtualenv.
 
