@@ -1,5 +1,7 @@
 <h1 align="center">KillTheHost v1.1</h1>
-**Latest Release:** v1.1
+<p align="center">
+  <img src="https://img.shields.io/badge/Latest-v1.1.0-brightgreen" />
+</p>
 <br/>
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
