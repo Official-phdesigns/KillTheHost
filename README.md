@@ -3,9 +3,7 @@
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
 </p>
-
 <div align="center">
-
 <br/>
 
 ### **Local development → public web, without friction.**
