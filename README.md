@@ -24,7 +24,6 @@
 
 <br/>
 
-[**⬇ Download Bundle**](https://killthehost.com/downloads/KillTheHost-v1.0.zip) &nbsp;·&nbsp;
 [**🌐 Website**](https://killthehost.com)
 
 <br/>
