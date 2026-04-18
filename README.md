@@ -41,7 +41,7 @@ KillTheHost is a bundle of two open-source, single-file Python tools designed to
 
 | Tool | Version | Purpose |
 |---|---|---|
-| 🐘 **PHP-MNGR** | `v2.4` | Local PHP project manager — spin up, manage, and publish PHP sites via Docker |
+| 🐘 **PHP-MNGR** | `v2.4` | Local & Public PHP project manager — spin up, manage, and publish PHP sites via Docker |
 | 🗄️ **DB-3NGIN3** | `v1.1` | Local database service manager — PostgreSQL, MySQL, Redis, MongoDB |
 
 Together, they connect to your **Namecheap** domains and route traffic through **Cloudflare Tunnels** — putting your localhost on the public internet without a single line of server config.
