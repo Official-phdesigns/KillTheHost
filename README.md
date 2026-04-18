@@ -26,8 +26,6 @@ A modern, open-source hosting panel for developers who want full control over se
 <br/>
 
 [**⬇ Download Bundle**](https://killthehost.com/downloads/KillTheHost-v1.0.zip) &nbsp;·&nbsp;
-[**🐘 PHP-MNGR**](https://killthehost.com/downloads/PHP-MNGR-v2.4.zip) &nbsp;·&nbsp;
-[**🗄️ DB-3NGIN3**](https://killthehost.com/downloads/DB-3NGIN3-v1.1.zip) &nbsp;·&nbsp;
 [**🌐 Website**](https://killthehost.com)
 
 <br/>
@@ -58,8 +56,8 @@ Together, they connect to your **Namecheap** domains and route traffic through *
 <br/>
 
 ```
-  localhost:8080  ──►  PHP-MNGR  ──►  Cloudflare Tunnel  ──►  yoursite.com
-  localhost:5432  ──►  DB-3NGIN3 ──►  Cloudflare Tunnel  ──►  yoursite.com
+  localhost:4280  ──►  PHP-MNGR  ──►  NameCheap ──► Cloudflare Tunnel  ──►  yoursite.com
+  localhost:5432  ──►  DB-3NGIN3 ──► Local ──► Cloudflare Tunnel  ──►  yoursite.com
 ```
 
 <br/>
