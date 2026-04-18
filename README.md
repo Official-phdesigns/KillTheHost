@@ -293,6 +293,7 @@ systemctl --user enable --now db3ngin3
 - [x] Database service management (DB-3NGIN3)
 - [x] Cloudflare tunnel integration
 - [x] Namecheap domain sync
+- [ ] Unified cross-platform launcher
 - [ ] Additional domain registrar support (Cloudflare, GoDaddy, Porkbun...)
 
 <br/>
