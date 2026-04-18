@@ -12,7 +12,7 @@
 
 [![License: AGPL v3](https://img.shields.io/badge/License-AGPL%20v3-blueviolet.svg?style=for-the-badge)](LICENSE)
 [![Python](https://img.shields.io/badge/Python-3.8+-3670A0?style=for-the-badge&logo=python&logoColor=ffdd54)](https://python.org)
-[![PHP](https://img.shields.io/badge/PHP-7.4+-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
+[![PHP](https://img.shields.io/badge/PHP-7.2--8.3-777BB4?style=for-the-badge&logo=php&logoColor=white)](https://php.net)
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Tunnels-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://cloudflare.com)
 [![Namecheap](https://img.shields.io/badge/Namecheap-Domain%20Sync-DE3723?style=for-the-badge)](https://namecheap.com)
 [![Docker](https://img.shields.io/badge/Docker-Required-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/engine/install/)
@@ -41,7 +41,7 @@ KillTheHost is a bundle of two open-source, single-file Python tools designed to
 
 | Tool | Version | Purpose |
 |---|---|---|
-| 🐘 **PHP-MNGR** | `v2.4` | Local PHP project manager — start, stop, and monitor sites |
+| 🐘 **PHP-MNGR** | `v2.4` | Local PHP project manager — spin up, manage, and publish PHP sites via Docker |
 | 🗄️ **DB-3NGIN3** | `v1.1` | Local database service manager — PostgreSQL, MySQL, Redis, MongoDB |
 
 Together, they connect to your **Namecheap** domains and route traffic through **Cloudflare Tunnels** — putting your localhost on the public internet without a single line of server config.
@@ -65,13 +65,13 @@ Together, they connect to your **Namecheap** domains and route traffic through *
 Connect your **Namecheap** account and assign real domains to local projects — no manual DNS editing required. More registrar integrations are on the roadmap.
 
 ### ☁️ Cloudflare Tunnel Integration  
-Link a free Cloudflare account and expose local services to the public web securely. No port forwarding. No router config. No tunnel scripts.
+Link a free Cloudflare account and expose local services to the public web securely. No port forwarding. No router config. No tunnel scripts. Works on CGNAT connections (e.g. T-Mobile 5G home internet) where traditional port forwarding is impossible.
 
 ### 🚀 One-Click Public Access  
 From localhost to a live URL in seconds — perfect for client previews, team demos, and real-world testing without a full deployment pipeline.
 
 ### 🐘 PHP Project Control  
-View runtime state, port, PHP version, and filesystem path for every local site. Start and stop projects from a clean interface instead of juggling terminal tabs.
+Spin up `php:VERSION-apache` Docker containers per site with a single click. Supports **PHP 7.2 through 8.3**. Each site gets its own port (auto-assigned from 8100+), a browser-based **file manager** (browse, edit, upload, download, rename, delete, chmod), an **inline code editor** for PHP/HTML/CSS/JS, and a **custom `php.ini`** per site. Start and stop sites from a clean UI instead of juggling terminal tabs.
 
 ### 🗄️ Database Service Management  
 Spin up or shut down **PostgreSQL, MySQL, MariaDB, Redis, and MongoDB** Docker containers with a single click. Live status is polled every 15 seconds, connection strings are always one click away, and persistent data survives container restarts — stored in `~/.db3ngin3/data/`.
@@ -87,7 +87,7 @@ Spin up or shut down **PostgreSQL, MySQL, MariaDB, Redis, and MongoDB** Docker c
 | Requirement | Notes |
 |---|---|
 | **Python 3.8+** | Standard library only — no pip installs required |
-| **Docker** | Used by DB-3NGIN3 to run all database containers |
+| **Docker** | Used by both PHP-MNGR and DB-3NGIN3 to run all containers |
 
 **Install Docker on Ubuntu/Linux**
 
@@ -110,8 +110,10 @@ cd KillTheHost
 **2. Run PHP-MNGR**
 
 ```bash
-python3 php-mngr.py
+sg docker -c "python3 phpmanager.py"
 ```
+
+> Opens automatically at **http://localhost:4280**
 
 **3. Run DB-3NGIN3**
 
@@ -132,10 +134,13 @@ python3 db3ngin3.py
 ### Connecting a Domain
 1. Whitelist your public IP address in the Namecheap API settings to allow external requests
 2. Create a scoped API token in Cloudflare (avoid using the global API key)
-3. Assign Zone → DNS → Edit permissions to the token for the target domain
-4. Open KillTheHost and navigate to Domains & Tunnels
-5. Provide your Cloudflare API token
-6. Enter your Namecheap API credentials (API key + username)
+3. Assign the following permissions to the token for the target domain:
+   - Account → Cloudflare Tunnel → Edit & Read
+   - Zone → Zone → Read
+   - Zone → DNS → Edit & Read
+4. Open KillTheHost and navigate to **Domains & Tunnels**
+5. In **⚙ Settings → Cloudflare**, paste your API token and save
+6. In **⚙ Settings → Namecheap**, enter your API key and username
 7. Select the desired domain and map it to your local service (port/container)
 8. Apply changes — DNS records are provisioned automatically; no manual configuration required
 
@@ -147,15 +152,95 @@ python3 db3ngin3.py
 ### Going Live with Cloudflare
 
 1. Log in with your **Cloudflare account** (free tier works)
-2. Select a local project or database service
-3. Hit **Expose** — KillTheHost handles the tunnel setup
-4. Your site is now reachable at your real domain
+2. Go to **Domains & Tunnels** and click **☁ Tunnel Site** on any domain
+3. Select your PHP site from the dropdown
+4. Hit **Tunnel Now** — KillTheHost handles the tunnel setup
+5. Your site is now reachable at your real domain
 
 <br/>
 
 ---
 
-## 🗄️ Supported Databases
+## 🐘 PHP-MNGR Reference
+
+### Supported PHP Versions
+
+PHP-MNGR runs each site inside a `php:VERSION-apache` Docker container. Supported versions:
+
+`7.2` · `7.3` · `7.4` · `8.0` · `8.1` · `8.2` · `8.3`
+
+### Port Assignments
+
+| Service | Port |
+|---|---|
+| PHP-MNGR UI | 4280 |
+| PHP sites (auto-assigned) | 8100, 8101, 8102… |
+
+### Architecture
+
+```
+Internet
+  └── yourdomain.com (Cloudflare Edge)
+        └── Cloudflare Named Tunnel (cloudflared container)
+              └── http://localhost:8100
+                    └── PHP Docker container (website)
+
+PHP-MNGR UI → http://localhost:4280
+```
+
+**Docker containers created:**
+- `<site-name>` — one `php:VERSION-apache` container per site (ports 8100+)
+- `cftunnel-<site-id>` — one `cloudflare/cloudflared` container per tunnel (`--network host`)
+
+### Data Locations
+
+| What | Where |
+|---|---|
+| Site registry | `~/.phpmngr/sites.json` |
+| Tunnel registry | `~/.phpmngr/tunnels.json` |
+| Cloudflare credentials | `~/.phpmngr/cloudflare.json` |
+| Namecheap credentials | `~/.phpmngr/namecheap.json` |
+| Site web roots | `~/.phpmngr/sites/<id>/www/` |
+| Per-site PHP config | `~/.phpmngr/sites/<id>/php.ini` |
+
+### Survive Reboots
+
+```bash
+# Auto-restart site containers
+docker update --restart unless-stopped <site-name>
+
+# Start PHP-MNGR manually after reboot
+cd "/path/to/phpmanager"
+sg docker -c "python3 phpmanager.py"
+```
+
+**Optional: systemd service**
+
+```ini
+# Save as ~/.config/systemd/user/phpmngr.service
+[Unit]
+Description=PHP-MNGR
+
+[Service]
+ExecStart=/usr/bin/sg docker -c "python3 /path/to/phpmanager.py"
+WorkingDirectory=/path/to/phpmanager
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+```
+
+```bash
+systemctl --user enable --now phpmngr
+```
+
+<br/>
+
+---
+
+## 🗄️ DB-3NGIN3 Reference
+
+### Supported Databases
 
 DB-3NGIN3 manages the following engines via Docker:
 
@@ -167,9 +252,11 @@ DB-3NGIN3 manages the following engines via Docker:
 | **Redis** | 6.2, 7.0, 7.2 | 6379 | — | — |
 | **MongoDB** | 5.0, 6.0, 7.0 | 27017 | `admin` | `admin` |
 
+> ⚠️ **Security Notice:** These are default credentials for local development. Do not expose database containers publicly without changing credentials first.
+
 Port conflicts are detected automatically at instance creation time.
 
-## 📁 Data Locations
+### Data Locations
 
 | What | Where |
 |---|---|
@@ -178,7 +265,7 @@ Port conflicts are detected automatically at instance creation time.
 
 Deleting an instance removes the Docker container but **preserves data files on disk**.
 
-## ⚙️ Run DB-3NGIN3 as a Background Service
+### Run DB-3NGIN3 as a Background Service
 
 ```ini
 # Save as ~/.config/systemd/user/db3ngin3.service
@@ -229,7 +316,7 @@ systemctl --user enable --now db3ngin3
 
 ![PHP-MNGR interface](https://killthehost.com/images/php.png)
 
-*Manage & Create every PHP project with runtime info, port visibility, and Cloudflare tunneling*
+*Manage & create every PHP project with runtime info, port visibility, inline editing, and Cloudflare tunneling*
 
 </div>
 
