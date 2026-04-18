@@ -2,8 +2,6 @@
 
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
-  
-A modern, open-source hosting panel for developers who want full control over servers, deployments, and infrastructure without unnecessary overhead.
 </p>
 
 <div align="center">
