@@ -1,0 +1,87 @@
+# 🗄️ DB-3NGIN3 for Linux
+
+A DBngin-style local database manager for Ubuntu / Linux.
+Manage PostgreSQL, MySQL, MariaDB, Redis, and MongoDB from a clean dark web UI — no config files, no dependencies beyond Docker.
+
+---
+
+## Quick start
+
+```bash
+python3 db3ngin3.py
+```
+
+Opens automatically at **http://127.0.0.1:7734**
+
+---
+
+## Requirements
+
+| Requirement | Notes |
+|---|---|
+| Python 3.8+ | Standard library only — no pip installs |
+| Docker | Used to run all database containers |
+
+### Install Docker on Ubuntu
+
+```bash
+curl -fsSL https://get.docker.com | sh
+sudo usermod -aG docker $USER
+# Log out and back in, then run db3ngin3.py
+```
+
+---
+
+## Supported databases
+
+| Database   | Versions          | Default port | User     | Password |
+|------------|-------------------|--------------|----------|----------|
+| PostgreSQL | 13, 14, 15, 16    | 5432         | postgres | postgres |
+| MySQL      | 5.7, 8.0, 8.3     | 3306         | admin    | admin    |
+| MariaDB    | 10.6, 10.11, 11.3 | 3307         | root     | root     |
+| Redis      | 6.2, 7.0, 7.2     | 6379         | —        | —        |
+| MongoDB    | 5.0, 6.0, 7.0     | 27017        | admin    | admin    |
+
+---
+
+## Features
+
+- **One-click start / stop** — launches Docker containers on demand
+- **Persistent data** — database files survive container restarts, stored in `~/.db3ngin3/data/`
+- **Auto status sync** — live Docker state polled every 15 seconds
+- **Connection strings** — click any instance to expand; copy the connection string in one click
+- **Port conflict detection** — prevented at creation time
+- **Collapsible sidebar** — full mobile/responsive support
+- **No pip dependencies** — pure Python standard library
+
+---
+
+## Data locations
+
+| What | Where |
+|---|---|
+| Instance metadata | `~/.db3ngin3/instances.json` |
+| Database files    | `~/.db3ngin3/data/<instance-id>/` |
+
+Deleting an instance removes the Docker container but keeps data files on disk.
+
+---
+
+## Running as a background service (optional)
+
+```bash
+# systemd unit — save as ~/.config/systemd/user/db3ngin3.service
+[Unit]
+Description=DB-3NGIN3 database manager
+
+[Service]
+ExecStart=/usr/bin/python3 /path/to/db3ngin3.py
+Restart=on-failure
+
+[Install]
+WantedBy=default.target
+```
+
+```bash
+systemctl --user enable --now db3ngin3
+```
