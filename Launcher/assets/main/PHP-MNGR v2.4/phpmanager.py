@@ -2115,7 +2115,7 @@ a:hover{text-decoration:underline}
   <div class="sb-logo">
     <div>
       <div class="sb-logo-name">PHP-MNGR</div>
-      <div class="sb-logo-sub">for devs & homelabers </div>
+      <div class="sb-logo-sub">Local development → public web, without friction</div>
     </div>
   </div>
   <div class="sb-nav">
