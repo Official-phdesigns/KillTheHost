@@ -501,7 +501,7 @@ html, body {
     <div class="logo">
       <div>
         <div class="logo-name">DB-3NGIN3</div>
-        <div class="logo-sub">for devs & homelabers</div>
+        <div class="logo-sub">Local development → public web, without friction</div>
       </div>
     </div>
     <nav class="nav">
