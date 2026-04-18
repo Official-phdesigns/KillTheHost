@@ -4,6 +4,8 @@
     <img src="https://img.shields.io/badge/Latest%20Release-v1.1-brightgreen" />
   </a>
 </h3>
+  
+<br/>
 
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
