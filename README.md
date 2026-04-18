@@ -1,11 +1,4 @@
-<h1 align="center">KillTheHost: v1.0<p>
-<h3 align="center">
-  <a href="https://github.com/Official-phdesigns/KillTheHost/releases/tag/v.1.1">
-    <img src="https://img.shields.io/badge/Latest%20Release-v1.1-brightgreen" />
-  </a>
-</h3>
-  
-<br/>
+# KillTheHost v1.1
 
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
@@ -43,12 +36,13 @@
 
 ## 🧩 What's Inside
 
-KillTheHost is a bundle of two open-source, single-file Python tools designed to eliminate the gap between local development and live deployment.
+KillTheHost is a bundle of two open-source, single-file Python tools unified by a cross-platform browser-based launcher — designed to eliminate the gap between local development and live deployment.
 
 | Tool | Version | Purpose |
 |---|---|---|
+| ⚡ **Launcher** | `v1.0` | Unified browser UI to start, stop, and monitor both tools — zero dependencies |
 | 🐘 **PHP-MNGR** | `v2.4` | Local & Public PHP project manager — spin up, manage, and publish PHP sites via Docker |
-| 🗄️ **DB-3NGIN3** | `v1.1` | Local database service manager — PostgreSQL, MySQL, Redis, MongoDB |
+| 🗄️ **DB-3NGIN3** | `v1.2` | Local database service manager — PostgreSQL, MySQL, Redis, MongoDB |
 
 Together, they connect to your **Namecheap** domains and route traffic through **Cloudflare Tunnels** — putting your localhost on the public internet without a single line of server config.
 
@@ -61,25 +55,30 @@ Together, they connect to your **Namecheap** domains and route traffic through *
 <br/>
 
 ```
+  localhost:5000  ──►  Launcher UI (control panel)
   localhost:4280  ──►  PHP-MNGR  ──►  NameCheap  ──►  Cloudflare Tunnel  ──►  yoursite.com
   localhost:7734  ──►  DB-3NGIN3 ──►  Local  ──►  Cloudflare Tunnel  ──►  yoursite.com
+
 ```
 
 <br/>
 
+### ⚡ Unified Launcher
+A single browser-based control panel that starts and stops both PHP-MNGR and DB-3NGIN3 with one click. Real-time console output, live status indicators, uptime timers, and port monitoring — all in one place. Zero external dependencies, pure Python standard library.
+
 ### 🌐 Domain Sync
 Connect your **Namecheap** account and assign real domains to local projects — no manual DNS editing required. More registrar integrations are on the roadmap.
 
-### ☁️ Cloudflare Tunnel Integration  
+### ☁️ Cloudflare Tunnel Integration
 Link a free Cloudflare account and expose local services to the public web securely. No port forwarding. No router config. No tunnel scripts. Works on CGNAT connections (e.g. T-Mobile 5G home internet) where traditional port forwarding is impossible.
 
-### 🚀 One-Click Public Access  
+### 🚀 One-Click Public Access
 From localhost to a live URL in seconds — perfect for client previews, team demos, and real-world testing without a full deployment pipeline.
 
-### 🐘 PHP Project Control  
+### 🐘 PHP Project Control
 Spin up `php:VERSION-apache` Docker containers per site with a single click. Supports **PHP 7.2 through 8.3**. Each site gets its own port (auto-assigned from 8100+), a browser-based **file manager** (browse, edit, upload, download, rename, delete, chmod), an **inline code editor** for PHP/HTML/CSS/JS, and a **custom `php.ini`** per site. Start and stop sites from a clean UI instead of juggling terminal tabs.
 
-### 🗄️ Database Service Management  
+### 🗄️ Database Service Management
 Spin up or shut down **PostgreSQL, MySQL, MariaDB, Redis, and MongoDB** Docker containers with a single click. Live status is polled every 15 seconds, connection strings are always one click away, and persistent data survives container restarts — stored in `~/.db3ngin3/data/`.
 
 <br/>
@@ -105,37 +104,65 @@ sudo usermod -aG docker $USER
 
 ---
 
-**1. Download the bundle**
+**1. Clone the repo**
 
 ```bash
 git clone https://github.com/Official-phdesigns/KillTheHost.git
-unzip KillTheHost.zip
 cd KillTheHost
 ```
 
-**2. Run PHP-MNGR**
+**2. Start the Launcher**
 
+**Linux / macOS:**
 ```bash
-sg docker -c "python3 phpmanager.py"
+chmod +x launch.sh
+./launch.sh
 ```
 
-> Opens automatically at **http://localhost:4280**
-
-**3. Run DB-3NGIN3**
-
-```bash
-python3 db3ngin3.py
+**Windows:**
+```
+Double-click launch.bat  — or run it from any terminal
 ```
 
-> Opens automatically at **http://localhost:7734**
+The launcher opens automatically at **http://localhost:5000** and lets you start, stop, and monitor both panels from one place.
 
-> Both tools are single-file Python scripts with no external dependencies — no pip, no virtualenv.
+<br/>
+
+### Folder Structure
+
+```
+KillTheHost/
+├── launch.sh                  ← Linux / macOS entry point
+├── launch.bat                 ← Windows entry point
+├── LICENSE
+├── README.md
+└── Launcher/
+    ├── launcher.py            ← Browser-based control panel (port 5000)
+    └── assets/
+        └── main/
+            ├── PHP-MNGR v2.4/
+            │   └── phpmanager.py
+            └── DB-3NGIN3 v1.2/
+                └── db3ngin3.py
+```
 
 <br/>
 
 ---
 
 ## 🛠️ Usage
+
+### Using the Launcher
+
+Once `launch.sh` / `launch.bat` is run, a control panel opens in your browser at `http://localhost:5000`.
+
+From there you can:
+- **Start / Stop** PHP-MNGR and DB-3NGIN3 individually or together
+- **Open** each panel directly in a new browser tab
+- **Monitor** live status, uptime, and real-time console output for both services
+- **Filter** console output by service
+
+To stop the launcher itself, press `Ctrl+C` in the terminal. It will gracefully shut down any running services first.
 
 ### Connecting a Domain
 1. Whitelist your public IP address in the Namecheap API settings to allow external requests
@@ -179,6 +206,7 @@ PHP-MNGR runs each site inside a `php:VERSION-apache` Docker container. Supporte
 
 | Service | Port |
 |---|---|
+| Launcher UI | 5000 |
 | PHP-MNGR UI | 4280 |
 | PHP sites (auto-assigned) | 8100, 8101, 8102… |
 
@@ -192,6 +220,7 @@ Internet
                     └── PHP Docker container (website)
 
 PHP-MNGR UI → http://localhost:4280
+Launcher UI → http://localhost:5000
 ```
 
 **Docker containers created:**
@@ -215,21 +244,21 @@ PHP-MNGR UI → http://localhost:4280
 # Auto-restart site containers
 docker update --restart unless-stopped <site-name>
 
-# Start PHP-MNGR manually after reboot
-cd "/path/to/phpmanager"
-sg docker -c "python3 phpmanager.py"
+# Start manually after reboot
+./launch.sh        # Linux / macOS
+launch.bat         # Windows
 ```
 
-**Optional: systemd service**
+**Optional: systemd service (Linux)**
 
 ```ini
-# Save as ~/.config/systemd/user/phpmngr.service
+# Save as ~/.config/systemd/user/killthehost.service
 [Unit]
-Description=PHP-MNGR
+Description=KillTheHost Launcher
 
 [Service]
-ExecStart=/usr/bin/sg docker -c "python3 /path/to/phpmanager.py"
-WorkingDirectory=/path/to/phpmanager
+ExecStart=/bin/sh /path/to/KillTheHost/launch.sh
+WorkingDirectory=/path/to/KillTheHost
 Restart=on-failure
 
 [Install]
@@ -237,7 +266,7 @@ WantedBy=default.target
 ```
 
 ```bash
-systemctl --user enable --now phpmngr
+systemctl --user enable --now killthehost
 ```
 
 <br/>
@@ -271,24 +300,7 @@ Port conflicts are detected automatically at instance creation time.
 
 Deleting an instance removes the Docker container but **preserves data files on disk**.
 
-### Run DB-3NGIN3 as a Background Service
-
-```ini
-# Save as ~/.config/systemd/user/db3ngin3.service
-[Unit]
-Description=DB-3NGIN3 database manager
-
-[Service]
-ExecStart=/usr/bin/python3 /path/to/db3ngin3.py
-Restart=on-failure
-
-[Install]
-WantedBy=default.target
-```
-
-```bash
-systemctl --user enable --now db3ngin3
-```
+> DB-3NGIN3 is managed exclusively through the KillTheHost Launcher. Use `launch.sh` / `launch.bat` to start and stop it.
 
 <br/>
 
@@ -300,7 +312,7 @@ systemctl --user enable --now db3ngin3
 - [x] Database service management (DB-3NGIN3)
 - [x] Cloudflare tunnel integration
 - [x] Namecheap domain sync
-- [ ] Unified cross-platform launcher
+- [x] Unified cross-platform launcher (v1.1)
 - [ ] Additional domain registrar support (Cloudflare, GoDaddy, Porkbun...)
 
 <br/>
@@ -310,6 +322,14 @@ systemctl --user enable --now db3ngin3
 ## 🖥️ Screenshots
 
 <div align="center">
+
+### KillTheHost Launcher — Main Control Panel
+
+![KillTheHost Launcher interface](https://killthehost.com/images/launcher.png)
+
+*Dedicated control panel for managing the DB-3NGIN3 and PHP-MNGR services, including status, and runtime controls*
+
+<br/>
 
 ### DB-3NGIN3 — Database Instance Control
 
