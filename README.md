@@ -1,6 +1,12 @@
 <h1 align="center">## KillTheHost: v1.0<p>
 <h3 align="center">## Latest Release: v1.1<p>
 
+<h3 align="center">
+  <a href="https://github.com/Official-phdesigns/KillTheHost/releases/tag/v.1.1">
+    <img src="https://img.shields.io/badge/Latest%20Release-v1.1-brightgreen" />
+  </a>
+</h3>
+
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
 </p>
