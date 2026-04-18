@@ -1,5 +1,5 @@
-# KillTheHost v1.1
-
+<h1 align="center">KillTheHost v1.1</h1>
+<br/>
 <p align="center">
   <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
 </p>
