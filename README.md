@@ -365,4 +365,6 @@ Any modified versions of this software that are run over a network must also be 
 
 *Stop treating localhost like a dead end.*
 
+## Latest Release: v1.1
+
 </div>
