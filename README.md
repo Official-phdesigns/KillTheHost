@@ -56,8 +56,8 @@ Together, they connect to your **Namecheap** domains and route traffic through *
 <br/>
 
 ```
-  localhost:4280  ──►  PHP-MNGR  ──►  NameCheap ──► Cloudflare Tunnel  ──►  yoursite.com
-  localhost:5432  ──►  DB-3NGIN3 ──► Local ──► Cloudflare Tunnel  ──►  yoursite.com
+  localhost:4280  ──►  PHP-MNGR  ──►  NameCheap  ──►  Cloudflare Tunnel  ──►  yoursite.com
+  localhost:5432  ──►  DB-3NGIN3 ──►  Local  ──►  Cloudflare Tunnel  ──►  yoursite.com
 ```
 
 <br/>
