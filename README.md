@@ -4,7 +4,7 @@
 </p>
 <br/>
 <p align="center">
-  <img src="https://killthehost.com/images/social-card.png" alt="" width="500">
+  <img src="https://i.ibb.co/V0w1pf23/social-card.png" alt="" width="500">
 </p>
 <div align="center">
 <br/>
