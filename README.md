@@ -418,7 +418,7 @@ systemctl --user enable --now killthehost
 
 ### MAIL-SRVR — Browser Email Client
 
-![MAIL-SRVR interface]( )
+![MAIL-SRVR interface](https://i.ibb.co/0Rbb9b59/Chat-GPT-Image-Apr-22-2026-03-41-53-AM.png)
 
 *Full email client — compose with rich text and attachments, inbox with folders, deliverability checklist, DKIM provisioning*
 
