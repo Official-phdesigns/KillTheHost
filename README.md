@@ -4,7 +4,7 @@
 </p>
 <br/>
 <p align="center">
-  <img src="https://i.ibb.co/V0w1pf23/social-card.png" alt="" width="800">
+  <img src="https://i.ibb.co/V0w1pf23/social-card.png" alt="" width="900">
 </p>
 <div align="center">
 <br/>
