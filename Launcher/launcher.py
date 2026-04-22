@@ -36,7 +36,7 @@ from urllib.parse import urlparse
 LAUNCHER_PORT = 5000
 SYSTEM        = platform.system()          # "Linux" | "Darwin" | "Windows"
 BASE          = Path(__file__).parent.resolve()
-VERSION       = "1.1"
+VERSION       = "1.3"
 
 def _find_logo() -> str:
     """Return filename of the first image found in BASE/images/, or empty string."""
@@ -87,6 +87,26 @@ SERVICES = {
         "port"     : 7734,
         "color"    : "#FF5C5C",
         "needs_sg" : False,
+    },
+    "mail_srvr": {
+        "label"    : "MAIL-SRVR",
+        "subtitle" : "Integrated Mail Server",
+        "version"  : "v1.0",
+        "dir"      : "assets/main/MAIL-SRVR v1.0",
+        "script"   : "mailserver.py",
+        "port"     : 6060,
+        "color"    : "#A78BFA",
+        "needs_sg" : False,
+    },
+    "stax_mngr": {
+        "label"    : "STAX-MNGR",
+        "subtitle" : "Docker Stack Manager",
+        "version"  : "v1.0",
+        "dir"      : "assets/main/STAX-MNGR v1.0",
+        "script"   : "staxmngr.py",
+        "port"     : 6161,
+        "color"    : "#00c896",
+        "needs_sg" : True,
     },
 }
 
@@ -391,7 +411,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   /* ── Cards ─────────────────────────────────────────── */
   .cards {
     display: grid;
-    grid-template-columns: 1fr 1fr;
+    grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
     gap: 12px;
   }
 
@@ -646,7 +666,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   footer a { color: var(--dim); text-decoration: none; }
   footer a:hover { color: var(--green); }
 
-  @media (max-width: 660px) {
+  @media (max-width: 860px) {
     .cards { grid-template-columns: 1fr; }
     header { flex-direction: column; align-items: flex-start; }
     .sys-info { text-align: left; }
@@ -678,8 +698,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
   <div class="global-bar">
     <span class="global-label">Global controls</span>
-    <button class="gbtn gbtn-start-all" onclick="startAll()">&#9654;&#9654; Start Both</button>
-    <button class="gbtn gbtn-stop-all"  onclick="stopAll()">&#9632;&#9632; Stop Both</button>
+    <button class="gbtn gbtn-start-all" onclick="startAll()">&#9654;&#9654; Start All</button>
+    <button class="gbtn gbtn-stop-all"  onclick="stopAll()">&#9632;&#9632; Stop All</button>
   </div>
 
   <div class="log-section">
@@ -689,6 +709,8 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <button class="fbtn active" data-f="all"       onclick="setFilter('all',this)">All</button>
         <button class="fbtn"        data-f="php_mngr"  onclick="setFilter('php_mngr',this)">PHP-MNGR</button>
         <button class="fbtn"        data-f="db_3ngin3" onclick="setFilter('db_3ngin3',this)">DB-3NGIN3</button>
+        <button class="fbtn"        data-f="mail_srvr" onclick="setFilter('mail_srvr',this)">MAIL-SRVR</button>
+        <button class="fbtn"        data-f="stax_mngr" onclick="setFilter('stax_mngr',this)">STAX-MNGR</button>
       </div>
       <button class="cbtn" onclick="clearLog()">Clear All</button>
     </div>
