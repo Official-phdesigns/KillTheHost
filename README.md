@@ -410,7 +410,7 @@ systemctl --user enable --now killthehost
 
 ### KillTheHost Launcher — Main Control Panel
 
-![KillTheHost Launcher interface](https://killthehost.com/images/launcher.png)
+![KillTheHost Launcher interface]([https://killthehost.com/images/launcher.png](https://i.ibb.co/5WWvFztg/Screenshot-From-2026-04-22-03-34-56.png))
 
 *Dedicated control panel for managing all KillTheHost services, including status, uptime, and runtime controls*
 
