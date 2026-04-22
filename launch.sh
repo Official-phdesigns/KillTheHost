@@ -7,7 +7,7 @@
 #    chmod +x launch.sh
 #    ./launch.sh
 #
-#  AGPL-3.0  |  KillTheHost Launcher v1.1 
+#  AGPL-3.0  |  KillTheHost Launcher v1.3 
 # ============================================================
 
 SCRIPT="$(cd "$(dirname "$0")" && pwd)/Launcher/launcher.py"
