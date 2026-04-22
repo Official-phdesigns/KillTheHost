@@ -1334,7 +1334,6 @@ tbody td { padding: 10px 12px; vertical-align: middle; }
 
 <div class="topbar">
   <div class="brand">
-    <div class="brand-icon">📦</div>
     <div>
       <h1>STAX-MNGR</h1>
       <p>Local development → public web, without friction</p>
