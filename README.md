@@ -1,10 +1,6 @@
-<h1 align="center">KillTheHost v1.3</h1>
+<h1 align="center">KillTheHost v1.4</h1>
 <p align="center">
-  <img src="https://img.shields.io/badge/Latest-v1.3.0-brightgreen" />
-</p>
-<br/>
-<p align="center">
-  <img src="https://i.ibb.co/WWYKQmFN/Kill-The-Host-v1-3.png" alt="" width="900">
+  <img src="https://i.ibb.co/sv6FWTcX/v1-4-poster.png" />
 </p>
 <div align="center">
 <br/>
@@ -19,11 +15,12 @@
 [![Cloudflare](https://img.shields.io/badge/Cloudflare-Tunnels-F38020?style=for-the-badge&logo=cloudflare&logoColor=white)](https://cloudflare.com)
 [![Namecheap](https://img.shields.io/badge/Namecheap-Domain%20Sync-DE3723?style=for-the-badge)](https://namecheap.com)
 [![Docker](https://img.shields.io/badge/Docker-Required-2496ED?style=for-the-badge&logo=docker&logoColor=white)](https://docs.docker.com/engine/install/)
+[![Node.js](https://img.shields.io/badge/Node.js-Required-339933?style=for-the-badge&logo=node.js&logoColor=white)](https://nodejs.org)
 
 <br/>
 
-> **KillTheHost** brings together **PHP-MNGR**, **DB-3NGIN3**, **MAIL-SRVR**, and **STAX-MNGR** into one unified workflow —  
-> run your stack locally, manage your databases, host your own email, deploy Docker stacks, sync real domains, and go live in a click.
+> **KillTheHost** brings together **PHP-MNGR**, **DB-3NGIN3**, **MAIL-SRVR**, **STAX-MNGR**, and **NODE-MNGR** into one unified workflow —  
+> run your stack locally, manage your databases, host your own email, deploy Docker stacks, manage Node.js apps, sync real domains, and go live in a click.
 
 <br/>
 
@@ -37,17 +34,61 @@
 
 <br/>
 
+## 🆕 What's New in v1.4 — NODE-MNGR
+
+> **KillTheHost v1.4 introduces NODE-MNGR** — a full browser-based Node.js app manager that brings the same zero-friction deployment experience to React, Next.js, Vite, and Node.js projects.
+
+No more juggling terminal windows, manually running `npm start`, or tracking which port your app is on. NODE-MNGR gives every Node.js project its own dashboard card with live status, controls, logs, and one-click public access via Cloudflare Tunnels.
+
+### 🟢 NODE-MNGR Highlights
+
+| Feature | Details |
+|---|---|
+| **App Dashboard** | Live status cards for every deployed app — total, running, stopped, and error counts at a glance |
+| **Deploy in seconds** | Point NODE-MNGR at a local folder or GitHub repo and hit **+ Deploy App** |
+| **Start / Stop / Restart** | Per-app controls directly from the browser — no terminal required |
+| **Per-app Node version** | Switch Node.js versions per project via `nvm` — Node 18, 20, 22, and more |
+| **Package manager support** | Works with both `npm` and `yarn` |
+| **Real-time logs** | Live log streaming per app from the **Logs** tab |
+| **Port management** | Auto-assigns ports (3100+) per app, visible on each card |
+| **System info** | **System** tab shows host resource usage and nvm environment details |
+| **Cloudflare Tunnels** | Expose any Node.js app to the public web with one click — same as PHP-MNGR |
+
+```
+  localhost:6262  ──►  NODE-MNGR UI
+  localhost:3100  ──►  Your React / Next.js / Vite / Node app
+  localhost:3101  ──►  Another app
+        ↓
+  Cloudflare Tunnel  ──►  yourapp.com
+```
+
+### Supported Frameworks
+
+`React` · `Next.js` · `Vite` · `Express` · `Node.js (plain)` · any `npm`/`yarn` project
+
+### Data Locations
+
+| What | Where |
+|---|---|
+| App registry | `~/.nodemngr/apps.json` |
+| App data & builds | `~/.nodemngr/apps/<id>/` |
+
+<br/>
+
+---
+
 ## 🧩 What's Inside
 
-KillTheHost is a bundle of four open-source, single-file Python tools unified by a cross-platform browser-based launcher — designed to eliminate the gap between local development and live deployment.
+KillTheHost is a bundle of five open-source, single-file Python tools unified by a cross-platform browser-based launcher — designed to eliminate the gap between local development and live deployment.
 
 | Tool | Version | Purpose |
 |---|---|---|
-| ⚡ **Launcher** | `v1.2` | Unified browser UI to start, stop, and monitor all tools — zero dependencies |
-| 🐘 **PHP-MNGR** | `v2.4` | Local & Public PHP project manager — spin up, manage, and publish PHP sites via Docker |
+| ⚡ **Launcher** | `v1.4` | Unified browser UI to start, stop, and monitor all tools — zero dependencies |
+| 🐘 **PHP-MNGR** | `v2.5` | Local & Public PHP project manager — spin up, manage, and publish PHP sites via Docker |
 | 🗄️ **DB-3NGIN3** | `v1.2` | Local database service manager — PostgreSQL, MySQL, MariaDB, Redis, MongoDB |
-| ✉️ **MAIL-SRVR** | `v1.1` | Self-hosted email server — send, receive, IMAP, DKIM, SPF, DMARC, and a full browser mail client |
+| ✉️ **MAIL-SRVR** | `v1.0` | Self-hosted email server — send, receive, IMAP, DKIM, SPF, DMARC, and a full browser mail client |
 | 🐳 **STAX-MNGR** | `v1.0` | Docker stack manager — deploy and manage pre-configured application stacks with one click |
+| 🟢 **NODE-MNGR** | `v1.0` | Node.js app manager — deploy and manage React, Next.js, Vite, and Node.js projects *(New in v1.4)* |
 
 Together, they connect to your **Namecheap** domains and route traffic through **Cloudflare Tunnels** — putting your localhost on the public internet without a single line of server config.
 
@@ -64,13 +105,14 @@ Together, they connect to your **Namecheap** domains and route traffic through *
   localhost:4280  ──►  PHP-MNGR    ──►  Cloudflare Tunnel  ──►  yoursite.com
   localhost:7734  ──►  DB-3NGIN3   ──►  PostgreSQL · MySQL · Redis · MongoDB
   localhost:6060  ──►  MAIL-SRVR   ──►  SMTP/IMAP  ──►  mail.yourdomain.com
-  localhost:6161  ──►  STAX-MNGR  ──►  Docker Stacks  ──►  VaultWarden · Nextcloud · Gitea…
+  localhost:6161  ──►  STAX-MNGR   ──►  Docker Stacks  ──►  VaultWarden · Nextcloud · Gitea…
+  localhost:6262  ──►  NODE-MNGR   ──►  Node.js Apps  ──►  React · Next.js · Vite…
 ```
 
 <br/>
 
 ### ⚡ Unified Launcher
-A single browser-based control panel that starts and stops PHP-MNGR, DB-3NGIN3, MAIL-SRVR, and STAX-MNGR with one click. Real-time console output, live status indicators, uptime timers, and port monitoring — all in one place. Zero external dependencies, pure Python standard library.
+A single browser-based control panel that starts and stops PHP-MNGR, DB-3NGIN3, MAIL-SRVR, STAX-MNGR, and NODE-MNGR with one click. Real-time console output, live status indicators, uptime timers, and port monitoring — all in one place. Zero external dependencies, pure Python standard library.
 
 ### 🌐 Domain Sync
 Connect your **Namecheap** account and assign real domains to local projects — no manual DNS editing required. More registrar integrations are on the roadmap.
@@ -90,6 +132,11 @@ Spin up or shut down **PostgreSQL, MySQL, MariaDB, Redis, and MongoDB** Docker c
 ### ✉️ Self-Hosted Email Server
 Run a complete email server on your own VPS. MAIL-SRVR handles everything: SMTP delivery and inbound receiving, IMAP inbox access, DKIM signing, SPF and DMARC records, and an automated deliverability checklist. Includes a full browser-based email client with compose, rich text editing, file attachments, draft saving, folder navigation (Inbox, Sent, Drafts, Trash, Junk), and per-account HTML signatures.
 
+### 🟢 Node.js App Manager *(New in v1.4)*
+Deploy and manage React, Next.js, Vite, and Node.js projects from a browser-based dashboard. NODE-MNGR handles app deployment, start/stop/restart controls, per-app Node.js version switching via `nvm`, real-time log streaming, and automatic port assignment — all without touching the terminal. Supports both `npm` and `yarn`. Each app gets its own card with live status, port info, and direct controls. Expose any app to the public web via Cloudflare Tunnels with one click.
+
+> 👉 **[Jump to NODE-MNGR Reference ↓](#-node-mngr-reference)**
+
 <br/>
 
 ---
@@ -101,7 +148,8 @@ Run a complete email server on your own VPS. MAIL-SRVR handles everything: SMTP 
 | Requirement | Notes |
 |---|---|
 | **Python 3.8+** | Standard library only — no pip installs required |
-| **Docker** | Used by PHP-MNGR, DB-3NGIN3, and MAIL-SRVR to run all containers |
+| **Docker** | Used by PHP-MNGR, DB-3NGIN3, MAIL-SRVR, and STAX-MNGR to run all containers |
+| **Node.js** | Required for NODE-MNGR — install via [nvm](https://github.com/nvm-sh/nvm) for easy version switching |
 
 **Install Docker on Ubuntu/Linux**
 
@@ -149,14 +197,16 @@ KillTheHost/
     ├── launcher.py             ← Browser-based control panel (port 5000)
     └── assets/
         └── main/
-            ├── PHP-MNGR v2.4/
+            ├── PHP-MNGR v2.5/
             │   └── phpmanager.py
             ├── DB-3NGIN3 v1.2/
             │   └── db3ngin3.py
             ├── MAIL-SRVR v1.0/
             │   └── mailserver.py
-            └── STAX-MNGR v1.0/
-                └── staxmngr.py
+            ├── STAX-MNGR v1.0/
+            │   └── staxmngr.py
+            └── NODE-MNGR v1.0/         ← New in v1.4
+                └── nodemngr.py
 ```
 
 <br/>
@@ -209,6 +259,18 @@ To stop the launcher itself, press `Ctrl+C` in the terminal. It will gracefully 
 7. Use the **Compose** tab to send your first email
 
 > **Note:** Live email delivery requires a VPS with a public static IP and outbound port 25 open. MAIL-SRVR includes a deliverability checklist that guides you through every requirement.
+
+### Deploying a Node.js App with NODE-MNGR
+
+1. Open NODE-MNGR at **http://localhost:6262**
+2. Click **+ Deploy App** in the top-right corner
+3. Point it at your local project folder (or paste a GitHub repo URL)
+4. Select your package manager (`npm` or `yarn`) and Node.js version
+5. NODE-MNGR installs dependencies and starts your app automatically
+6. Your app appears as a card on the dashboard — click **Open** to view it in the browser
+7. To go public, click the **Cloudflare Tunnel** button on the app card and assign a domain
+
+> **Tip:** Use the **Node** button on each app card to switch Node.js versions per project without affecting other apps.
 
 <br/>
 
@@ -332,6 +394,58 @@ Deleting an instance removes the Docker container but **preserves data files on 
 
 ---
 
+## 🟢 NODE-MNGR Reference
+
+### Supported Frameworks & Runtimes
+
+`React` · `Next.js` · `Vite` · `Express` · `Node.js (plain)` · any `npm` or `yarn` project
+
+### Port Assignments
+
+| Service | Port |
+|---|---|
+| NODE-MNGR UI | 6262 |
+| Apps (auto-assigned) | 3100, 3101, 3102… |
+
+### Node.js Version Switching
+
+NODE-MNGR uses `nvm` under the hood to manage Node.js versions per app. Each app card shows the active Node version and includes a **Node** button to switch versions without affecting other running apps.
+
+Recommended: install `nvm` before using NODE-MNGR:
+
+```bash
+curl -o- https://raw.githubusercontent.com/nvm-sh/nvm/v0.39.7/install.sh | bash
+```
+
+### Dashboard Overview
+
+| Panel | What it shows |
+|---|---|
+| **Apps** | All deployed apps with live status, port, package manager, and controls |
+| **Logs** | Real-time log output per app |
+| **System** | Host resource usage, nvm environment, and Node.js version info |
+
+### App Card Controls
+
+| Control | Action |
+|---|---|
+| **Stop** | Gracefully stop the running app process |
+| **Restart** | Restart the app (re-runs the start command) |
+| **Open** | Open the app in a new browser tab |
+| **Node** | Switch the Node.js version for this app via nvm |
+| **⚙** | App settings — rename, change start command, delete |
+
+### Data Locations
+
+| What | Where |
+|---|---|
+| App registry | `~/.nodemngr/apps.json` |
+| App data & builds | `~/.nodemngr/apps/<id>/` |
+
+<br/>
+
+---
+
 ### 🐳 Docker Stack Manager *(New in v1.3)*
 Deploy and manage pre-configured Docker application stacks with a single click. STAX-MNGR ships with 10 ready-to-use stacks — from password managers and media servers to local AI and self-hosted Git. Each stack is a fully configured Docker Compose setup with persistent data volumes.
 
@@ -396,9 +510,12 @@ systemctl --user enable --now killthehost
 - [x] Unified cross-platform launcher (v1.1)
 - [x] Self-hosted email server with full browser client (MAIL-SRVR v1.1)
 - [x] Docker stack manager with pre-configured application stacks (STAX-MNGR v1.0)
-- [ ] Additional domain registrar support (GoDaddy, Porkbun, Cloudflare Registrar…)
+- [x] Node.js app manager with nvm version switching and Cloudflare tunnel support (NODE-MNGR v1.1) ← **New in v1.4**
+- [x] Additional domain registrar support (GoDaddy, Porkbun, Cloudflare Registrar…)
 - [ ] Multi-domain email support in MAIL-SRVR
 - [ ] MAIL-SRVR relay/smarthost option for providers that block port 25
+- [ ] NODE-MNGR: GitHub auto-deploy / webhook triggers
+- [ ] NODE-MNGR: Environment variable manager per app
 
 <br/>
 
@@ -408,43 +525,51 @@ systemctl --user enable --now killthehost
 
 <div align="center">
 
-### KillTheHost Launcher — Main Control Panel
+### ⚡ KillTheHost Launcher — Main Control Panel
 
-![KillTheHost Launcher interface](https://i.ibb.co/5WWvFztg/Screenshot-From-2026-04-22-03-34-56.png)
+[![LAUNCHER](https://i.ibb.co/0j02ctSj/LAUNCHER.png)](https://ibb.co/6RKwmBxR)
 
 *Dedicated control panel for managing all KillTheHost services, including status, uptime, and runtime controls*
 
 <br/>
 
-### MAIL-SRVR — Browser Email Client
+### 🟢 NODE-MNGR — Node.js App Manager *(New in v1.4)*
 
-![MAIL-SRVR interface](https://i.ibb.co/0Rbb9b59/Chat-GPT-Image-Apr-22-2026-03-41-53-AM.png)
+[![NODE-MNGR](https://i.ibb.co/yF8jMP6M/NODE-MNGR.png)](https://ibb.co/VYv4h9gh)
+
+*Deploy and manage React, Next.js, Vite, and Node.js apps — live status, per-app Node version switching, real-time logs, and Cloudflare tunnel support*
+
+<br/>
+
+### 🐘 PHP-MNGR — Site Management View
+
+[![PHP-MNGR](https://i.ibb.co/1GfWymnc/PHP-MNGR.png)](https://ibb.co/B2VMWCPk)
+
+*Manage & create every PHP project with runtime info, port visibility, inline editing, and Cloudflare tunneling*
+
+<br/>
+
+### 🗄️ DB-3NGIN3 — Database Instance Control
+
+[![DB-3NGIN3](https://i.ibb.co/p6VpZc96/DB-3-NGIN3.png)](https://ibb.co/hxQvHbtx)
+
+*Spin up and manage PostgreSQL, MySQL, MariaDB, Redis, and MongoDB — live status, connection strings, persistent data*
+
+<br/>
+
+### ✉️ MAIL-SRVR — Browser Email Client
+
+[![MAIL-SRVR](https://i.ibb.co/qMvFTVM6/MAIL-SRVR.png)](https://ibb.co/5WPxbwWZ)
 
 *Full email client — compose with rich text and attachments, inbox with folders, deliverability checklist, DKIM provisioning*
 
 <br/>
 
-### STAX-MNGR v1.0 — Docker Manager & Stack Deployment
+### 🐳 STAX-MNGR — Docker Stack Manager
 
-![STAX-MNGR interface](https://i.ibb.co/Txcm0n2N/Screenshot-From-2026-04-22-03-14-11.png)
+[![STAX-MNGR](https://i.ibb.co/bj2pjdmh/STAX-MNGR.png)](https://ibb.co/xKfVK5Lv)
 
-*Deploy, monitor, and control Docker stacks with full visibility into containers and runtime*
-
-<br/>
-
-### DB-3NGIN3 — Database Instance Control
-
-![DB-3NGIN3 interface](https://killthehost.com/images/db.png)
-
-*View running state and ports for all local database services*
-
-<br/>
-
-### PHP-MNGR — Site Management View
-
-![PHP-MNGR interface](https://killthehost.com/images/php.png)
-
-*Manage & create every PHP project with runtime info, port visibility, inline editing, and Cloudflare tunneling*
+*Deploy pre-configured Docker stacks — VaultWarden, Nextcloud, Gitea, Jellyfin, Ollama, and more — with one click*
 
 </div>
 
