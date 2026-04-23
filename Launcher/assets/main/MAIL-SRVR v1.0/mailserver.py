@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════╗
-║       MAIL-SRVR  v1.1  —  KillTheHost Mail           ║
+║       MAIL-SRVR  v1.0  —  KillTheHost Mail           ║
 ║                                                      ║
 ║   Shares your Cloudflare zone with PHP-MNGR sites.   ║
 ║   mail.yourdomain.com runs alongside yourdomain.com. ║
@@ -40,7 +40,7 @@ from urllib.error   import URLError, HTTPError
 # ─────────────────────────────────────────────────────────────────────────────
 
 PORT    = 6060
-VERSION = "1.1"
+VERSION = "1.0"
 
 # Our own data dir
 DATA_DIR    = Path.home() / ".mailsrvr"
