@@ -1,17 +1,17 @@
 #!/usr/bin/env python3
 """
-╔══════════════════════════════════════════════════════╗
-║         KillTheHost  —  Unified Launcher             ║
-║                                                      ║
-║   Located at KillTheHost/Launcher/assets/            ║
-║   Run via launch.bat / launch.sh in repo root        ║
-║                                                      ║
-║   A control panel opens automatically in your        ║
-║   browser at http://localhost:5000                   ║
-║                                                      ║
-║   Zero external dependencies.                        ║
-║   Pure Python 3.8+ standard library only.            ║
-╚══════════════════════════════════════════════════════╝
+╔════╗                                        ╔════╗
+║      KillTheHost  —  Unified Launcher v1.4       ║
+║                                                  ║
+║      Located at KillTheHost/Launcher/assets/     ║
+║   Run via launch.bat / launch.sh in repo root    ║
+║                                                  ║
+║    A control panel opens automatically in your   ║
+║         browser at http://localhost:5000         ║
+║                                                  ║
+║           Zero external dependencies.            ║
+║      Pure Python 3.8+ standard library only.     ║
+╚════╝                                        ╚════╝
 """
 
 import sys
@@ -29,26 +29,14 @@ from datetime import datetime
 from http.server import HTTPServer, BaseHTTPRequestHandler
 from urllib.parse import urlparse
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 #  CONFIG
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 
 LAUNCHER_PORT = 5000
 SYSTEM        = platform.system()          # "Linux" | "Darwin" | "Windows"
 BASE          = Path(__file__).parent.resolve()
-VERSION       = "1.3"
-
-def _find_logo() -> str:
-    """Return filename of the first image found in BASE/images/, or empty string."""
-    img_dir = BASE / "images"
-    if img_dir.is_dir():
-        for ext in (".png", ".svg", ".webp", ".jpg", ".jpeg", ".gif"):
-            for f in sorted(img_dir.iterdir()):
-                if f.suffix.lower() == ext:
-                    return f.name
-    return ""
-
-LOGO_FILE = _find_logo()
+VERSION       = "1.4"
 
 def _get_docker_version() -> str:
     """Return Docker version string, or 'Not found' if unavailable."""
@@ -71,8 +59,8 @@ SERVICES = {
     "php_mngr": {
         "label"    : "PHP-MNGR",
         "subtitle" : "PHP Project Manager",
-        "version"  : "v2.4",
-        "dir"      : "assets/main/PHP-MNGR v2.4",
+        "version"  : "v2.5",
+        "dir"      : "assets/main/PHP-MNGR v2.5",
         "script"   : "phpmanager.py",
         "port"     : 4280,
         "color"    : "#4A9EFF",
@@ -108,12 +96,22 @@ SERVICES = {
         "color"    : "#00c896",
         "needs_sg" : True,
     },
+    "node_mngr": {
+        "label"    : "NODE-MNGR",
+        "subtitle" : "Node.js & React Project Manager",
+        "version"  : "v1.0",
+        "dir"      : "assets/main/NODE-MNGR v1.0",
+        "script"   : "nodemngr.py",
+        "port"     : 7272,
+        "color"    : "#F7DF1E",
+        "needs_sg" : False,
+    },
 }
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 #  PROCESS MANAGER
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 
 class ServiceProcess:
     """Thread-safe wrapper around one script's subprocess."""
@@ -126,7 +124,7 @@ class ServiceProcess:
         self.log          = []                   # list of {ts, text, level}
         self._start_time  = None
 
-    # ── public ────────────────────────────────────────────────────────────────
+    # ── public ────
 
     @property
     def running(self) -> bool:
@@ -234,7 +232,7 @@ class ServiceProcess:
             "log"    : self.log[-200:],      # last 200 entries per poll
         }
 
-    # ── private ───────────────────────────────────────────────────────────────
+    # ── private ────
 
     def _build_cmd(self, script_path: Path) -> list:
         python = sys.executable
@@ -275,9 +273,9 @@ class ServiceProcess:
         return {"ok": False, "error": msg}
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 #  GLOBAL PROCESS STATE
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 
 procs: dict = {k: ServiceProcess(k, v) for k, v in SERVICES.items()}
 
@@ -292,9 +290,9 @@ def port_in_use(port: int) -> bool:
             return False
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 #  EMBEDDED HTML UI
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 
 HTML_TEMPLATE = """<!DOCTYPE html>
 <html lang="en">
@@ -336,13 +334,13 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     line-height: 1.5;
   }
 
-  /* ── Scrollbar ─────────────────────────────────────── */
+  /* ── Scrollbar ──── */
   ::-webkit-scrollbar             { width: 4px; }
   ::-webkit-scrollbar-track       { background: transparent; }
   ::-webkit-scrollbar-thumb       { background: var(--border); border-radius: 2px; }
   ::-webkit-scrollbar-thumb:hover { background: var(--muted); }
 
-  /* ── Header ────────────────────────────────────────── */
+  /* ── Header ──── */
   header {
     padding: 13px 24px;
     border-bottom: 1px solid var(--border);
@@ -354,41 +352,61 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     background: var(--panel);
   }
 
-  .brand { display: flex; align-items: center; gap: 12px; }
-
-  .brand-logo {
-    height: 32px;
-    width: auto;
-    display: block;
-    object-fit: contain;
+  .brand {
+    display: flex;
+    align-items: flex-start;
+    gap: 10px;
   }
 
-  .brand-logo-fallback {
+  .brand-mark {
+    width: 27px;
+    height: 27px;
+    border-radius: 7px;
+    background: linear-gradient(145deg, #ff56b9 0%, #ff4fb3 72%, #c86bff 100%);
     display: flex;
     align-items: center;
     justify-content: center;
-    width: 36px; height: 36px;
-    background: #1c1c1c;
-    border-radius: 10px;
-    font-size: 13px;
-    font-weight: 700;
-    color: #ffffff;
-    font-family: "Menlo", "Consolas", monospace;
-    letter-spacing: -1px;
+    box-shadow: inset 0 0 0 1px rgba(255, 255, 255, 0.14);
     flex-shrink: 0;
-    box-shadow: inset 0 0 0 1px rgba(255,255,255,0.08);
+    position: relative;
+    top: 1px;
+  }
+
+  .brand-mark-glyph {
+    color: #f4f4f5;
+    font-size: 12px;
+    font-weight: 700;
+    font-family: "Menlo", "Consolas", monospace;
+    letter-spacing: -0.65px;
+    transform: translateY(-0.3px);
   }
 
   .brand-text h1 {
-    font-size: 15px;
-    font-weight: 700;
-    color: var(--text);
-    letter-spacing: -0.2px;
+    font-size: 23px;
+    line-height: 1.02;
+    font-weight: 780;
+    letter-spacing: -0.7px;
+    margin: 0;
   }
+
+  .brand-word {
+    color: #f4f5fb;
+    -webkit-text-fill-color: #f4f5fb;
+  }
+
+  .brand-word.the {
+    background: linear-gradient(104deg, #ff5ab8 0%, #ff54b4 76%, #c96dff 100%);
+    color: #ff5ab8;
+    -webkit-background-clip: text;
+    background-clip: text;
+    -webkit-text-fill-color: transparent;
+  }
+
   .brand-text p {
-    font-size: 11px;
-    color: var(--muted);
+    font-size: 10.5px;
+    color: #6f7284;
     margin-top: 2px;
+    letter-spacing: 0.08px;
   }
 
   .sys-info {
@@ -399,7 +417,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     font-variant-numeric: tabular-nums;
   }
 
-  /* ── Main ──────────────────────────────────────────── */
+  /* ── Main ──── */
   main {
     padding: 18px 24px;
     flex: 1;
@@ -408,7 +426,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     gap: 12px;
   }
 
-  /* ── Cards ─────────────────────────────────────────── */
+  /* ── Cards ──── */
   .cards {
     display: grid;
     grid-template-columns: repeat(auto-fit, minmax(260px, 1fr));
@@ -452,7 +470,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     margin-bottom: 13px;
   }
 
-  /* ── Status ─────────────────────────────────────────── */
+  /* ── Status ──── */
   .status-row {
     display: flex;
     align-items: center;
@@ -495,7 +513,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     margin: 11px 0;
   }
 
-  /* ── Service Buttons ───────────────────────────────── */
+  /* ── Service Buttons ──── */
   .btn-row { display: flex; gap: 8px; margin-bottom: 12px; }
 
   .btn {
@@ -543,7 +561,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   }
   .link-open:hover { color: var(--green); }
 
-  /* ── Global bar ────────────────────────────────────── */
+  /* ── Global bar ──── */
   .global-bar {
     background: var(--panel);
     border-radius: 8px;
@@ -589,7 +607,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     filter: none;
   }
 
-  /* ── Log ───────────────────────────────────────────── */
+  /* ── Log ──── */
   .log-section { display: flex; flex-direction: column; flex: 1; }
 
   .log-header {
@@ -654,7 +672,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   .ll.info    .ll-msg { color: #8e8ea0; }
   .ll.output  .ll-msg { color: #707070; }
 
-  /* ── Footer ────────────────────────────────────────── */
+  /* ── Footer ──── */
   footer {
     text-align: center;
     padding: 9px;
@@ -669,6 +687,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
   @media (max-width: 860px) {
     .cards { grid-template-columns: 1fr; }
     header { flex-direction: column; align-items: flex-start; }
+    .brand-text h1 { font-size: 20px; }
     .sys-info { text-align: left; }
     main { padding: 14px; }
   }
@@ -678,15 +697,11 @@ HTML_TEMPLATE = """<!DOCTYPE html>
 
 <header>
   <div class="brand">
-    <img
-      class="brand-logo"
-      src="%%LOGO_SRC%%"
-      alt="KillTheHost"
-      onerror="this.style.display='none';document.getElementById('logo-fb').style.display='flex';"
-    >
-    <div class="brand-logo-fallback" id="logo-fb" style="display:none">&gt;_</div>
+    <div class="brand-mark" aria-hidden="true">
+      <span class="brand-mark-glyph">&gt;_</span>
+    </div>
     <div class="brand-text">
-      <h1>KillTheHost</h1>
+      <h1><span class="brand-word">Kill</span><span class="brand-word the">The</span><span class="brand-word">Host</span></h1>
       <p>Local development &rarr; public web, without friction.</p>
     </div>
   </div>
@@ -700,6 +715,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
     <span class="global-label">Global controls</span>
     <button class="gbtn gbtn-start-all" onclick="startAll()">&#9654;&#9654; Start All</button>
     <button class="gbtn gbtn-stop-all"  onclick="stopAll()">&#9632;&#9632; Stop All</button>
+    <button class="gbtn" id="open-all-btn" onclick="openAllPanels()" style="display:none;background:#444;color:#fff;border:1px solid #666;">&#8599; Open All Panels</button>
   </div>
 
   <div class="log-section">
@@ -711,6 +727,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <button class="fbtn"        data-f="db_3ngin3" onclick="setFilter('db_3ngin3',this)">DB-3NGIN3</button>
         <button class="fbtn"        data-f="mail_srvr" onclick="setFilter('mail_srvr',this)">MAIL-SRVR</button>
         <button class="fbtn"        data-f="stax_mngr" onclick="setFilter('stax_mngr',this)">STAX-MNGR</button>
+        <button class="fbtn"        data-f="node_mngr" onclick="setFilter('node_mngr',this)">NODE-MNGR</button>
       </div>
       <button class="cbtn" onclick="clearLog()">Clear All</button>
     </div>
@@ -732,21 +749,32 @@ let logFilter  = "all";
 let logBuffer  = [];
 let lastIdx    = {};
 
+function removeOpenAllButton() {
+  // Remove any dynamically added "Open All Panels" UI elements
+  document.querySelectorAll('.open-all-panels, button[data-open-all]').forEach(el => el.remove());
+  // Also remove buttons by exact text content if found
+  document.querySelectorAll('button').forEach(b => {
+    if (b.textContent && b.textContent.trim().includes('Open All Panels')) b.remove();
+  });
+  // Fallback: inject CSS to hide any remaining elements
+  if (!document.getElementById('hide-open-all-style')) {
+    const st = document.createElement('style');
+    st.id = 'hide-open-all-style';
+    st.textContent = `button.open-all-panels, button[data-open-all] { display: none !important; }`;
+    document.head.appendChild(st);
+  }
+}
+
 window.addEventListener("DOMContentLoaded", () => {
   document.getElementById("sys-info").innerHTML =
     "KillTheHost v%%VERSION%%<br>Python %%PYVER%% &nbsp;|&nbsp; %%SYSTEM%%<br>Docker %%DOCKER_VER%%";
-  // If no logo src, show fallback immediately
-  const img = document.querySelector(".brand-logo");
-  if (!img.src || img.src === window.location.href) {
-    img.style.display = "none";
-    document.getElementById("logo-fb").style.display = "flex";
-  }
   buildCards();
+  removeOpenAllButton();
   pollAll();
   setInterval(pollAll, 1500);
 });
 
-// ── Build cards ────────────────────────────────────────────────────────────
+// ── Build cards ────
 function buildCards() {
   const root = document.getElementById("cards-root");
   for (const [key, cfg] of Object.entries(SERVICES)) {
@@ -780,7 +808,7 @@ function buildCards() {
   }
 }
 
-// ── API calls ──────────────────────────────────────────────────────────────
+// ── API calls ────
 async function api(path, method="GET") {
   try {
     const r = await fetch(path, { method });
@@ -789,19 +817,33 @@ async function api(path, method="GET") {
 }
 
 async function svcAction(key, action) {
-  document.getElementById(action === "start" ? `bs-${key}` : `bp-${key}`).disabled = true;
-  await api(`/api/${key}/${action}`, "POST");
+  document.getElementById(action === "start" ? "bs-" + key : "bp-" + key).disabled = true;
+  await api("/api/" + key + "/" + action, "POST");
 }
 
 async function startAll() {
-  for (const k of Object.keys(SERVICES)) await api(`/api/${k}/start`, "POST");
+  const ordered = ["php_mngr", "db_3ngin3", "mail_srvr", "stax_mngr", "node_mngr"];
+  for (let i = 0; i < ordered.length; i++) {
+    if (!SERVICES[ordered[i]]) continue;
+    await api("/api/" + ordered[i] + "/start", "POST");
+  }
+  // Remove the legacy "Open All Panels" button if any UI tried to add it
+  removeOpenAllButton();
+}
+
+function openAllPanels() {
+  window.open("http://localhost:7734", "_blank");
+  window.open("http://localhost:4280", "_blank");
+  window.open("http://localhost:6060", "_blank");
+  window.open("http://localhost:6161", "_blank");
+  window.open("http://localhost:7272", "_blank");
 }
 async function stopAll() {
   for (const k of Object.keys(SERVICES)) await api(`/api/${k}/stop`, "POST");
 }
 
-// ── Polling ────────────────────────────────────────────────────────────────
-async function pollAll() {
+// ── Polling ────
+async function pollAll() { removeOpenAllButton();
   const res = await api("/api/status");
   if (!res) return;
   for (const [key, s] of Object.entries(res)) {
@@ -829,7 +871,7 @@ async function pollAll() {
   }
 }
 
-// ── Log ────────────────────────────────────────────────────────────────────
+// ── Log ────
 function addEntry(key, e) {
   logBuffer.push({ key, ...e });
   if (logBuffer.length > 2000) logBuffer = logBuffer.slice(-1800);
@@ -874,9 +916,9 @@ function setFilter(f, btn) {
 </html>"""
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 #  HTTP REQUEST HANDLER
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 
 class Handler(BaseHTTPRequestHandler):
 
@@ -907,7 +949,7 @@ class Handler(BaseHTTPRequestHandler):
         else:
             self._raw(404, "text/plain", b"Not found")
 
-    # ── helpers ───────────────────────────────────────────────────────────────
+    # ── helpers ────
 
     def _serve_image(self, filename: str):
         img_path = BASE / "images" / filename
@@ -927,7 +969,6 @@ class Handler(BaseHTTPRequestHandler):
             k: {f: v[f] for f in ("label","subtitle","version","port","color")}
             for k, v in SERVICES.items()
         })
-        logo_src = f"/images/{LOGO_FILE}" if LOGO_FILE else ""
         html = (
             HTML_TEMPLATE
             .replace("%%VERSION%%",       VERSION)
@@ -935,7 +976,6 @@ class Handler(BaseHTTPRequestHandler):
             .replace("%%PYVER%%",         sys.version.split()[0])
             .replace("%%DOCKER_VER%%",    DOCKER_VERSION)
             .replace("%%SERVICES_JSON%%", services_for_js)
-            .replace("%%LOGO_SRC%%",      logo_src)
         )
         self._raw(200, "text/html; charset=utf-8", html.encode("utf-8"))
 
@@ -952,9 +992,9 @@ class Handler(BaseHTTPRequestHandler):
         self.wfile.write(body)
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 #  PRE-FLIGHT CHECKS
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 
 def preflight() -> list:
     issues = []
@@ -996,15 +1036,15 @@ def preflight() -> list:
     return issues
 
 
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 #  ENTRY POINT
-# ─────────────────────────────────────────────────────────────────────────────
+# ────
 
 def main():
     print(f"""
-╔══════════════════════════════════════════════════════╗
+╔════╗
 ║         KillTheHost Launcher  v{VERSION:<23}║
-╚══════════════════════════════════════════════════════╝
+╚════╝
   Platform : {SYSTEM}
   Python   : {sys.version.split()[0]}
   Root     : {BASE}
