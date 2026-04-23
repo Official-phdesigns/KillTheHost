@@ -1,6 +1,10 @@
 <h1 align="center">KillTheHost v1.4</h1>
 <p align="center">
-  <img src="https://i.ibb.co/sv6FWTcX/v1-4-poster.png" />
+  <img src="https://img.shields.io/badge/Latest-v1.4.0-brightgreen" />
+</p>
+<br/>
+<p align="center">
+  <img src="https://i.ibb.co/sv6FWTcX/v1-4-poster.png" alt="" width="900">
 </p>
 <div align="center">
 <br/>
