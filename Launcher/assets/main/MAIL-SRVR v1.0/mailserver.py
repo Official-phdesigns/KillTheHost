@@ -2049,6 +2049,8 @@ HTML = r"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KillTheHost - MAIL-SRVR</title>
+    <link rel="shortcut icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
