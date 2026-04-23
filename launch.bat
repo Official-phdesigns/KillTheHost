@@ -4,7 +4,7 @@
 ::  Place this file in:  KillTheHost\
 ::  Double-click or run from any terminal.
 ::
-::  AGPL-3.0  |  KillTheHost Launcher v1.3 
+::  AGPL-3.0  |  KillTheHost Launcher v1.4 
 :: ============================================================
 setlocal EnableDelayedExpansion
 
@@ -43,7 +43,7 @@ if not exist "%SCRIPT%" (
     echo        launcher.py
     echo        assets\
     echo          main\
-    echo            PHP-MNGR v2.4\
+    echo            PHP-MNGR v2.5\
     echo            DB-3NGIN3 v1.2\
     echo.
     pause
