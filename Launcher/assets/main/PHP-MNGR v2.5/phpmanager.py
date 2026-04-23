@@ -1123,6 +1123,8 @@ header('X-Powered-By: PHP-MNGR');
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>{site['name']}</title>
+    <link rel="shortcut icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
 <style>
 *{{box-sizing:border-box;margin:0;padding:0}}
 body{{background:#0e0e0e;color:#ececec;font-family:'Inter',system-ui,sans-serif;display:flex;align-items:center;justify-content:center;min-height:100vh}}
@@ -2505,6 +2507,8 @@ HTML = r"""
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
 <title>KillTheHost - PHP-MNGR</title>
+    <link rel="shortcut icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
+    <link rel="icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
