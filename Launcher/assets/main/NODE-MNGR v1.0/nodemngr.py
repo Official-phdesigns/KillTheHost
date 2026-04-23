@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔════════════════════════════════════════════════════╗
-║       NODE-MNGR  v1.1  —  KillTheHost              ║
+║       NODE-MNGR  v1.0  —  KillTheHost              ║
 ║                                                    ║
 ║   Deploy & manage React + Node.js projects.        ║
 ║   Git clone, npm/yarn/pnpm, env vars, logs.        ║
@@ -29,7 +29,7 @@ from urllib.parse import parse_qs, urlparse
 PORT      = 7272
 DATA_DIR  = Path.home() / ".nodemngr"
 APPS_FILE = DATA_DIR / "apps.json"
-VERSION   = "1.1"
+VERSION   = "1.0"
 
 DATA_DIR.mkdir(parents=True, exist_ok=True)
 
