@@ -268,7 +268,7 @@ HTML = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>DB-3NGIN3</title>
+<title>KillTheHost - DB-3NGIN3</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=IBM+Plex+Mono:wght@400;500&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
 <style>
@@ -331,17 +331,28 @@ html, body {
 @keyframes fade-in { from{opacity:0} to{opacity:1} }
 
 .logo {
-  display:flex; align-items:center; gap:10px;
+  display:flex; align-items:flex-start; gap:10px;
   padding:16px 14px; border-bottom:1px solid var(--line); flex-shrink:0;
 }
-.logo-mark {
-  width:30px; height:30px; border-radius:var(--r-sm);
-  background:var(--surface); border:1px solid var(--line2);
+.kth-mark {
+  width:32px; height:32px; border-radius:8px;
+  background:linear-gradient(145deg,#ff56b9 0%,#ef63d6 62%,#c86bff 100%);
   display:flex; align-items:center; justify-content:center;
-  font-size:15px; flex-shrink:0;
+  font-family:"Menlo","Consolas",monospace; font-size:12px; font-weight:700;
+  color:#fff; letter-spacing:-.6px; flex-shrink:0;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);
+  margin-top:1px;
 }
-.logo-name { font-size:14px; font-weight:600; color:var(--t1); }
-.logo-sub  { font-family:var(--mono); font-size:9px; color:var(--t3); margin-top:1px; }
+.logo-main { display:flex; flex-direction:column; gap:1px; }
+.kth-logo { display:flex; align-items:center; gap:0; font-size:18px; font-weight:800; line-height:1; }
+.kth-word { color:#f4f5fb; letter-spacing:-.35px; }
+.kth-word.the {
+  background:linear-gradient(135deg,#ff5ab8 0%,#f468cd 55%,#c96dff 100%);
+  -webkit-background-clip:text; background-clip:text;
+  -webkit-text-fill-color:transparent;
+}
+.logo-name { font-size:13px; font-weight:700; color:var(--t1); letter-spacing:.25px; }
+.logo-sub  { font-family:var(--mono); font-size:9px; color:var(--t3); margin-top:1px; text-transform:uppercase; letter-spacing:.25px; }
 
 .nav { flex:1; overflow-y:auto; padding:8px; }
 .nav-item {
@@ -499,9 +510,13 @@ html, body {
 
   <aside class="sidebar">
     <div class="logo">
-      <div>
+      <div class="kth-mark">&gt;_</div>
+      <div class="logo-main">
+        <div class="kth-logo">
+          <span class="kth-word">Kill</span><span class="kth-word the">The</span><span class="kth-word">Host</span>
+        </div>
         <div class="logo-name">DB-3NGIN3</div>
-        <div class="logo-sub">Local development → public web, without friction</div>
+        <div class="logo-sub">KillTheHost Suite · Database Engine</div>
       </div>
     </div>
     <nav class="nav">
