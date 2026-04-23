@@ -2048,7 +2048,7 @@ HTML = r"""<!DOCTYPE html>
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>MAIL-SRVR — KillTheHost</title>
+<title>KillTheHost - MAIL-SRVR</title>
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
@@ -2069,12 +2069,21 @@ body{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,"Segoe UI",Helve
 header{padding:10px 20px;border-bottom:1px solid var(--border);
        background:var(--panel);display:flex;align-items:center;
        justify-content:space-between;gap:12px;flex-wrap:wrap}
-.brand{display:flex;align-items:center;gap:10px}
-.brand-icon{width:34px;height:34px;border-radius:8px;background:#1a1a1a;
-            border:1px solid var(--border);display:flex;align-items:center;
-            justify-content:center;font-size:16px;flex-shrink:0}
-.brand h1{font-size:14px;font-weight:700;letter-spacing:.5px}
-.brand p{font-size:11px;color:var(--muted)}
+.brand{display:flex;align-items:flex-start;gap:10px}
+.kth-mark{width:34px;height:34px;border-radius:9px;
+          background:linear-gradient(145deg,#ff56b9 0%,#ef63d6 62%,#c86bff 100%);
+          display:flex;align-items:center;justify-content:center;
+          font-family:"Menlo","Consolas",monospace;font-size:13px;font-weight:700;
+          color:#fff;letter-spacing:-.6px;flex-shrink:0;
+          box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);margin-top:1px}
+.brand-main{display:flex;flex-direction:column;gap:1px}
+.kth-logo{display:flex;align-items:center;gap:0;font-size:18px;font-weight:800;line-height:1}
+.kth-word{color:#f4f5fb;letter-spacing:-.35px}
+.kth-word.the{background:linear-gradient(135deg,#ff5ab8 0%,#f468cd 55%,#c96dff 100%);
+              -webkit-background-clip:text;background-clip:text;
+              -webkit-text-fill-color:transparent}
+.brand-app{font-size:13px;font-weight:700;color:var(--text);letter-spacing:.32px}
+.brand-suite{font-size:10px;color:var(--muted);letter-spacing:.22px;text-transform:uppercase}
 .hdr-right{display:flex;align-items:center;gap:8px;flex-wrap:wrap}
 .status-pill{display:flex;align-items:center;gap:6px;padding:4px 10px;
              border-radius:20px;font-size:11px;border:1px solid var(--border);
@@ -2396,7 +2405,14 @@ footer a:hover{color:var(--green)}
 
 <header>
   <div class="brand">
-    <div><h1>MAIL-SRVR</h1><p>Local development → public web, without friction</p></div>
+    <div class="kth-mark">&gt;_</div>
+    <div class="brand-main">
+      <div class="kth-logo">
+        <span class="kth-word">Kill</span><span class="kth-word the">The</span><span class="kth-word">Host</span>
+      </div>
+      <div class="brand-app">MAIL-SRVR</div>
+      <div class="brand-suite">KillTheHost Suite · Mail Server</div>
+    </div>
   </div>
   <div class="hdr-right">
     <div class="status-pill">
