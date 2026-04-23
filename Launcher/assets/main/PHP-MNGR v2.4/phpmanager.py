@@ -263,6 +263,399 @@ def nc_reset_ns(sld, tld):
     _, err = nc_call("namecheap.domains.dns.setDefault", {"SLD": sld, "TLD": tld})
     return err
 
+def nc_sync_ip(domain, ip, host="@"):
+    """Sync Namecheap A record host to a target IP."""
+    sld, tld = nc_split_domain(domain)
+    hosts, err = nc_get_hosts(sld, tld)
+    if err:
+        return err
+    target = "@" if (host or "@").strip() in ("", "@") else host.strip()
+    hosts = [h for h in hosts if not (h.get("name", "") == target and h.get("type", "").upper() == "A")]
+    hosts.insert(0, {"name": target, "type": "A", "address": ip, "ttl": "300"})
+    if target == "@":
+        has_www = any(h.get("name", "") == "www" for h in hosts)
+        if not has_www:
+            hosts.append({"name": "www", "type": "CNAME", "address": "@", "ttl": "1800"})
+    return nc_set_hosts(sld, tld, hosts)
+
+
+# ─── Additional Registrar APIs ────
+GD_API = "https://api.godaddy.com/v1"
+GD_CONFIG = DATA_DIR / "godaddy.json"
+
+PB_API = "https://api.porkbun.com/api/json/v3"
+PB_CONFIG = DATA_DIR / "porkbun.json"
+
+IO_API = "https://api.hosting.ionos.com/dns/v1"
+IO_CONFIG = DATA_DIR / "ionos.json"
+
+CFR_CONFIG = DATA_DIR / "cf_registrar.json"
+
+
+def gd_load():
+    if GD_CONFIG.exists():
+        try: return json.loads(GD_CONFIG.read_text())
+        except: pass
+    return {}
+
+
+def gd_save(cfg):
+    GD_CONFIG.write_text(json.dumps(cfg, indent=2))
+
+
+def gd_call(method, path, data=None, key=None, secret=None):
+    cfg = gd_load()
+    key = key or cfg.get("api_key", "")
+    secret = secret or cfg.get("api_secret", "")
+    if not key or not secret:
+        return None, "GoDaddy API credentials not configured"
+    url = GD_API + path
+    body = json.dumps(data).encode() if data is not None else None
+    req = urllib.request.Request(url, data=body, method=method, headers={
+        "Authorization": f"sso-key {key}:{secret}",
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "PHP-MNGR/1.0",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            raw = r.read().decode().strip()
+            return (json.loads(raw) if raw else {}), None
+    except urllib.error.HTTPError as e:
+        try:
+            raw = e.read().decode()
+            parsed = json.loads(raw) if raw else {}
+            if isinstance(parsed, dict):
+                msg = parsed.get("message") or parsed.get("detail") or raw
+            else:
+                msg = raw
+            return None, f"HTTP {e.code}: {msg}"
+        except Exception:
+            return None, f"HTTP {e.code}: {e.reason}"
+    except Exception as e:
+        return None, f"Network error: {e}"
+
+
+def gd_list_domains():
+    result, err = gd_call("GET", "/domains?limit=500")
+    if err: return [], err
+    items = result if isinstance(result, list) else []
+    domains = []
+    for d in items:
+        domains.append({
+            "name": d.get("domain", ""),
+            "expires": d.get("expires", ""),
+            "locked": bool(d.get("locked", False)),
+            "auto_renew": bool(d.get("renewAuto", False)),
+            "active": d.get("status", "").upper() in ("ACTIVE", ""),
+        })
+    return domains, None
+
+
+def gd_set_ns(domain, nameservers):
+    _, err = gd_call("PATCH", f"/domains/{urllib.parse.quote(domain)}", {"nameServers": nameservers})
+    return err
+
+
+def gd_sync_ip(domain, ip, host="@"):
+    host = "@" if (host or "@").strip() in ("", "@") else host.strip()
+    host_path = "@" if host == "@" else urllib.parse.quote(host)
+    _, err = gd_call("PUT", f"/domains/{urllib.parse.quote(domain)}/records/A/{host_path}", [{"data": ip, "ttl": 600}])
+    return err
+
+
+def pb_load():
+    if PB_CONFIG.exists():
+        try: return json.loads(PB_CONFIG.read_text())
+        except: pass
+    return {}
+
+
+def pb_save(cfg):
+    PB_CONFIG.write_text(json.dumps(cfg, indent=2))
+
+
+def pb_call(path, payload=None, key=None, secret=None):
+    cfg = pb_load()
+    key = key or cfg.get("api_key", "")
+    secret = secret or cfg.get("secret_key", "")
+    if not key or not secret:
+        return None, "Porkbun API credentials not configured"
+    body_data = {"apikey": key, "secretapikey": secret}
+    if payload: body_data.update(payload)
+    req = urllib.request.Request(PB_API + path, data=json.dumps(body_data).encode(), method="POST", headers={
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "PHP-MNGR/1.0",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            resp = json.loads(r.read().decode())
+    except urllib.error.HTTPError as e:
+        try:
+            raw = e.read().decode()
+            parsed = json.loads(raw) if raw else {}
+            msg = parsed.get("message") or parsed.get("status") or raw
+            return None, f"HTTP {e.code}: {msg}"
+        except Exception:
+            return None, f"HTTP {e.code}: {e.reason}"
+    except Exception as e:
+        return None, f"Network error: {e}"
+    status = str(resp.get("status", "")).upper()
+    if status not in ("SUCCESS", "OK"):
+        return None, resp.get("message") or resp.get("error") or f"Porkbun error: {status or 'UNKNOWN'}"
+    return resp, None
+
+
+def pb_list_domains():
+    resp, err = pb_call("/domain/listAll")
+    if err: return [], err
+    out = []
+    for item in resp.get("domains", []) or []:
+        if isinstance(item, dict):
+            out.append({"name": item.get("domain", ""), "expires": item.get("expireDate", ""), "active": True})
+        elif isinstance(item, str):
+            out.append({"name": item, "expires": "", "active": True})
+    return out, None
+
+
+def pb_set_ns(domain, nameservers):
+    _, err = pb_call(f"/domain/updateNs/{urllib.parse.quote(domain)}", {"ns": nameservers})
+    return err
+
+
+def pb_sync_ip(domain, ip, host="@"):
+    target_fqdn = domain if (host or "@").strip() in ("", "@") else f"{host.strip()}.{domain}"
+    resp, err = pb_call(f"/dns/retrieve/{urllib.parse.quote(domain)}")
+    if err: return err
+    records = resp.get("records", []) or []
+    target_id = None
+    for r in records:
+        if str(r.get("type", "")).upper() != "A":
+            continue
+        r_name = str(r.get("name", "")).strip().rstrip(".")
+        if r_name == target_fqdn.rstrip("."):
+            target_id = r.get("id")
+            break
+    if target_id:
+        _, err = pb_call(f"/dns/edit/{urllib.parse.quote(domain)}/{target_id}", {"content": ip, "ttl": "300"})
+    else:
+        payload = {"type": "A", "content": ip, "ttl": "300"}
+        if target_fqdn != domain:
+            payload["name"] = target_fqdn.split("." + domain)[0]
+        _, err = pb_call(f"/dns/create/{urllib.parse.quote(domain)}", payload)
+    return err
+
+
+def io_load():
+    if IO_CONFIG.exists():
+        try: return json.loads(IO_CONFIG.read_text())
+        except: pass
+    return {}
+
+
+def io_save(cfg):
+    IO_CONFIG.write_text(json.dumps(cfg, indent=2))
+
+
+def io_call(method, path, data=None, api_key=None):
+    cfg = io_load()
+    api_key = api_key or cfg.get("api_key", "")
+    if not api_key:
+        return None, "IONOS API key not configured"
+    body = json.dumps(data).encode() if data is not None else None
+    req = urllib.request.Request(IO_API + path, data=body, method=method, headers={
+        "X-API-Key": api_key,
+        "Content-Type": "application/json",
+        "Accept": "application/json",
+        "User-Agent": "PHP-MNGR/1.0",
+    })
+    try:
+        with urllib.request.urlopen(req, timeout=20) as r:
+            raw = r.read().decode().strip()
+            return (json.loads(raw) if raw else {}), None
+    except urllib.error.HTTPError as e:
+        try:
+            raw = e.read().decode()
+            parsed = json.loads(raw) if raw else {}
+            if isinstance(parsed, dict) and isinstance(parsed.get("messages"), list):
+                msg = "; ".join(m.get("message", "") for m in parsed.get("messages", []) if isinstance(m, dict))
+            elif isinstance(parsed, dict):
+                msg = parsed.get("message") or parsed.get("detail") or raw
+            else:
+                msg = raw
+            return None, f"HTTP {e.code}: {msg}"
+        except Exception:
+            return None, f"HTTP {e.code}: {e.reason}"
+    except Exception as e:
+        return None, f"Network error: {e}"
+
+
+def io_list_domains():
+    result, err = io_call("GET", "/zones")
+    if err: return [], err
+    zones = result if isinstance(result, list) else (result.get("zones", []) if isinstance(result, dict) else [])
+    return [{"name": z.get("name", ""), "id": z.get("id", ""), "active": True, "expires": ""} for z in (zones or [])], None
+
+
+def io_get_zone_id(domain):
+    domains, err = io_list_domains()
+    if err: return None, err
+    for z in domains:
+        if z.get("name", "") == domain:
+            return z.get("id", ""), None
+    for z in domains:
+        zn = z.get("name", "")
+        if zn and domain.endswith("." + zn):
+            return z.get("id", ""), None
+    return None, f"IONOS zone not found for {domain}"
+
+
+def io_set_ns(domain, nameservers):
+    return "IONOS API key verified, but nameserver updates are not available via the public DNS API. Update NS in the IONOS control panel."
+
+
+def io_sync_ip(domain, ip, host="@"):
+    zone_id, err = io_get_zone_id(domain)
+    if err: return err
+    zone, err = io_call("GET", f"/zones/{zone_id}")
+    if err: return err
+    records = zone.get("records", []) if isinstance(zone, dict) else []
+    fqdn = domain if (host or "@").strip() in ("", "@") else f"{host.strip()}.{domain}"
+    target = None
+    for r in records:
+        if str(r.get("type", "")).upper() == "A" and str(r.get("name", "")).rstrip(".") == fqdn.rstrip("."):
+            target = r
+            break
+    payload = {"name": fqdn, "type": "A", "content": ip, "ttl": 300, "prio": 0, "disabled": False}
+    if target and target.get("id"):
+        _, err = io_call("PUT", f"/zones/{zone_id}/records/{target['id']}", payload)
+    else:
+        _, err = io_call("POST", f"/zones/{zone_id}/records", [payload])
+    return err
+
+
+def cfr_load():
+    if CFR_CONFIG.exists():
+        try: return json.loads(CFR_CONFIG.read_text())
+        except: pass
+    return {}
+
+
+def cfr_save(cfg):
+    CFR_CONFIG.write_text(json.dumps(cfg, indent=2))
+
+
+def cfr_token():
+    cfg = cfr_load()
+    return cfg.get("token", "") or cf_load().get("token", "")
+
+
+def cfr_list_domains(token=None):
+    zones, err = cf_list_zones(token or cfr_token())
+    if err: return [], err
+    return [{"name": z.get("name", ""), "active": z.get("active", True), "expires": ""} for z in zones], None
+
+
+def cfr_set_ns(domain, nameservers):
+    zone_id, err = cf_get_zone_id(domain, token=cfr_token())
+    if err: return err
+    return None
+
+
+def cfr_sync_ip(domain, ip, host="@"):
+    token = cfr_token()
+    if not token:
+        return "Cloudflare Registrar token not configured"
+    zone_id, err = cf_get_zone_id(domain, token=token)
+    if err: return err
+    fqdn = domain if (host or "@").strip() in ("", "@") else f"{host.strip()}.{domain}"
+    existing, err = cf_call("GET", f"/zones/{zone_id}/dns_records?type=A&name={urllib.parse.quote(fqdn)}", token=token)
+    if err: return err
+    payload = {"type": "A", "name": fqdn, "content": ip, "ttl": 300, "proxied": False}
+    if existing and isinstance(existing, list) and existing:
+        _, err = cf_call("PUT", f"/zones/{zone_id}/dns_records/{existing[0]['id']}", payload, token=token)
+    else:
+        _, err = cf_call("POST", f"/zones/{zone_id}/dns_records", payload, token=token)
+    return err
+
+
+def registrar_set_ns(provider, domain, nameservers):
+    p = (provider or "").strip().lower()
+    if p in ("nc", "namecheap"):
+        sld, tld = nc_split_domain(domain)
+        return nc_set_ns(sld, tld, nameservers)
+    if p in ("gd", "godaddy"):
+        return gd_set_ns(domain, nameservers)
+    if p in ("pb", "porkbun"):
+        return pb_set_ns(domain, nameservers)
+    if p in ("ionos", "iosos", "io"):
+        return io_set_ns(domain, nameservers)
+    if p in ("cloudflare_registrar", "cf_registrar", "cloudflare-registrar", "cfr"):
+        return cfr_set_ns(domain, nameservers)
+    return f"Unsupported registrar provider: {provider}"
+
+
+def registrar_sync_ip(provider, domain, ip, host="@"):
+    p = (provider or "").strip().lower()
+    if p in ("nc", "namecheap"):
+        return nc_sync_ip(domain, ip, host=host)
+    if p in ("gd", "godaddy"):
+        return gd_sync_ip(domain, ip, host=host)
+    if p in ("pb", "porkbun"):
+        return pb_sync_ip(domain, ip, host=host)
+    if p in ("ionos", "iosos", "io"):
+        return io_sync_ip(domain, ip, host=host)
+    if p in ("cloudflare_registrar", "cf_registrar", "cloudflare-registrar", "cfr"):
+        return cfr_sync_ip(domain, ip, host=host)
+    return f"Unsupported registrar provider: {provider}"
+
+
+def detect_registrar_provider(domain):
+    """Best-effort provider detection from configured registrar accounts."""
+    try:
+        cfg = nc_load()
+        if cfg.get("api_key") and cfg.get("username"):
+            domains, err = nc_list_domains()
+            if not err and any(d.get("name") == domain for d in domains):
+                return "namecheap"
+    except Exception:
+        pass
+    try:
+        cfg = gd_load()
+        if cfg.get("api_key") and cfg.get("api_secret"):
+            domains, err = gd_list_domains()
+            if not err and any(d.get("name") == domain for d in domains):
+                return "godaddy"
+    except Exception:
+        pass
+    try:
+        cfg = pb_load()
+        if cfg.get("api_key") and cfg.get("secret_key"):
+            domains, err = pb_list_domains()
+            if not err and any(d.get("name") == domain for d in domains):
+                return "porkbun"
+    except Exception:
+        pass
+    try:
+        cfg = io_load()
+        if cfg.get("api_key"):
+            domains, err = io_list_domains()
+            if not err and any(d.get("name") == domain or domain.endswith("." + d.get("name", "")) for d in domains):
+                return "ionos"
+    except Exception:
+        pass
+    try:
+        token = cfr_token()
+        if token:
+            domains, err = cfr_list_domains(token)
+            if not err and any(d.get("name") == domain or domain.endswith("." + d.get("name", "")) for d in domains):
+                return "cloudflare_registrar"
+    except Exception:
+        pass
+    return "namecheap"
+
+
 # ─── Cloudflare API ───────────────────────────────────────────────────────────
 CF_API = "https://api.cloudflare.com/client/v4"
 CF_CONFIG = DATA_DIR / "cloudflare.json"
@@ -1192,6 +1585,51 @@ class Handler(BaseHTTPRequestHandler):
             self.send_json({"nameservers": ns})
             return
 
+        if path == "/api/gd/config":
+            cfg = gd_load()
+            self.send_json({"has_key": bool(cfg.get("api_key") and cfg.get("api_secret")), "server_ip": nc_get_ip()})
+            return
+
+        if path == "/api/gd/domains":
+            domains, err = gd_list_domains()
+            if err: self.send_json({"error": err}); return
+            self.send_json({"domains": domains})
+            return
+
+        if path == "/api/pb/config":
+            cfg = pb_load()
+            self.send_json({"has_key": bool(cfg.get("api_key") and cfg.get("secret_key")), "server_ip": nc_get_ip()})
+            return
+
+        if path == "/api/pb/domains":
+            domains, err = pb_list_domains()
+            if err: self.send_json({"error": err}); return
+            self.send_json({"domains": domains})
+            return
+
+        if path == "/api/io/config":
+            cfg = io_load()
+            self.send_json({"has_key": bool(cfg.get("api_key")), "server_ip": nc_get_ip()})
+            return
+
+        if path == "/api/io/domains":
+            domains, err = io_list_domains()
+            if err: self.send_json({"error": err}); return
+            self.send_json({"domains": domains})
+            return
+
+        if path == "/api/cfr/config":
+            cfg = cfr_load()
+            has_token = bool(cfg.get("token") or cf_load().get("token"))
+            self.send_json({"has_token": has_token, "server_ip": nc_get_ip()})
+            return
+
+        if path == "/api/cfr/domains":
+            domains, err = cfr_list_domains()
+            if err: self.send_json({"error": err}); return
+            self.send_json({"domains": domains})
+            return
+
         if path == "/api/cf/config":
             cfg = cf_load()
             self.send_json({"has_token": bool(cfg.get("token"))})
@@ -1611,6 +2049,154 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         # ── Cloudflare ───────────────────────────────────────────────────────
+        if path == "/api/nc/sync-ip":
+            data = self.read_json()
+            domain = data.get("domain", "") or ""
+            ip = data.get("ip", "") or nc_get_ip()
+            host = data.get("host", "@") or "@"
+            if not domain or not ip: self.send_json({"error": "domain and ip required"}); return
+            err = nc_sync_ip(domain, ip, host)
+            if err: self.send_json({"error": err}); return
+            self.send_json({"ok": True, "provider": "namecheap", "domain": domain, "host": host, "ip": ip})
+            return
+
+        if path == "/api/gd/config":
+            data = self.read_json()
+            cfg = gd_load()
+            if data.get("api_key"): cfg["api_key"] = data["api_key"]
+            if data.get("api_secret"): cfg["api_secret"] = data["api_secret"]
+            gd_save(cfg)
+            if cfg.get("api_key") and cfg.get("api_secret"):
+                domains, err = gd_list_domains()
+                if err: self.send_json({"ok": True, "warning": err, "domain_count": 0}); return
+                self.send_json({"ok": True, "domain_count": len(domains)}); return
+            self.send_json({"ok": True})
+            return
+
+        if path == "/api/gd/set-ns":
+            data = self.read_json()
+            domain = data.get("domain", "") or ""
+            ns = data.get("nameservers", []) or []
+            if not domain or not ns: self.send_json({"error": "domain and nameservers required"}); return
+            err = gd_set_ns(domain, ns)
+            if err: self.send_json({"error": err}); return
+            self.send_json({"ok": True})
+            return
+
+        if path == "/api/gd/sync-ip":
+            data = self.read_json()
+            domain = data.get("domain", "") or ""
+            ip = data.get("ip", "") or nc_get_ip()
+            host = data.get("host", "@") or "@"
+            if not domain or not ip: self.send_json({"error": "domain and ip required"}); return
+            err = gd_sync_ip(domain, ip, host)
+            if err: self.send_json({"error": err}); return
+            self.send_json({"ok": True, "provider": "godaddy", "domain": domain, "host": host, "ip": ip})
+            return
+
+        if path == "/api/pb/config":
+            data = self.read_json()
+            cfg = pb_load()
+            if data.get("api_key"): cfg["api_key"] = data["api_key"]
+            if data.get("secret_key"): cfg["secret_key"] = data["secret_key"]
+            pb_save(cfg)
+            if cfg.get("api_key") and cfg.get("secret_key"):
+                domains, err = pb_list_domains()
+                if err: self.send_json({"ok": True, "warning": err, "domain_count": 0}); return
+                self.send_json({"ok": True, "domain_count": len(domains)}); return
+            self.send_json({"ok": True})
+            return
+
+        if path == "/api/pb/set-ns":
+            data = self.read_json()
+            domain = data.get("domain", "") or ""
+            ns = data.get("nameservers", []) or []
+            if not domain or not ns: self.send_json({"error": "domain and nameservers required"}); return
+            err = pb_set_ns(domain, ns)
+            if err: self.send_json({"error": err}); return
+            self.send_json({"ok": True})
+            return
+
+        if path == "/api/pb/sync-ip":
+            data = self.read_json()
+            domain = data.get("domain", "") or ""
+            ip = data.get("ip", "") or nc_get_ip()
+            host = data.get("host", "@") or "@"
+            if not domain or not ip: self.send_json({"error": "domain and ip required"}); return
+            err = pb_sync_ip(domain, ip, host)
+            if err: self.send_json({"error": err}); return
+            self.send_json({"ok": True, "provider": "porkbun", "domain": domain, "host": host, "ip": ip})
+            return
+
+        if path == "/api/io/config":
+            data = self.read_json()
+            cfg = io_load()
+            if data.get("api_key"): cfg["api_key"] = data["api_key"]
+            io_save(cfg)
+            if cfg.get("api_key"):
+                domains, err = io_list_domains()
+                if err: self.send_json({"ok": True, "warning": err, "domain_count": 0}); return
+                self.send_json({"ok": True, "domain_count": len(domains)}); return
+            self.send_json({"ok": True})
+            return
+
+        if path == "/api/io/set-ns":
+            data = self.read_json()
+            domain = data.get("domain", "") or ""
+            ns = data.get("nameservers", []) or []
+            if not domain or not ns: self.send_json({"error": "domain and nameservers required"}); return
+            err = io_set_ns(domain, ns)
+            if err: self.send_json({"error": err}); return
+            self.send_json({"ok": True})
+            return
+
+        if path == "/api/io/sync-ip":
+            data = self.read_json()
+            domain = data.get("domain", "") or ""
+            ip = data.get("ip", "") or nc_get_ip()
+            host = data.get("host", "@") or "@"
+            if not domain or not ip: self.send_json({"error": "domain and ip required"}); return
+            err = io_sync_ip(domain, ip, host)
+            if err: self.send_json({"error": err}); return
+            self.send_json({"ok": True, "provider": "ionos", "domain": domain, "host": host, "ip": ip})
+            return
+
+        if path == "/api/cfr/config":
+            data = self.read_json()
+            cfg = cfr_load()
+            if data.get("token"): cfg["token"] = data["token"]
+            cfr_save(cfg)
+            token = cfr_token()
+            if token:
+                ok, err = cf_verify_token(token)
+                if not ok: self.send_json({"ok": True, "warning": err}); return
+                zones, zerr = cfr_list_domains(token)
+                if zerr: self.send_json({"ok": True, "warning": zerr, "domain_count": 0}); return
+                self.send_json({"ok": True, "domain_count": len(zones)}); return
+            self.send_json({"ok": True})
+            return
+
+        if path == "/api/cfr/set-ns":
+            data = self.read_json()
+            domain = data.get("domain", "") or ""
+            ns = data.get("nameservers", []) or []
+            if not domain: self.send_json({"error": "domain required"}); return
+            err = cfr_set_ns(domain, ns)
+            if err: self.send_json({"error": err}); return
+            self.send_json({"ok": True, "note": "Cloudflare Registrar uses Cloudflare nameservers by default."})
+            return
+
+        if path == "/api/cfr/sync-ip":
+            data = self.read_json()
+            domain = data.get("domain", "") or ""
+            ip = data.get("ip", "") or nc_get_ip()
+            host = data.get("host", "@") or "@"
+            if not domain or not ip: self.send_json({"error": "domain and ip required"}); return
+            err = cfr_sync_ip(domain, ip, host)
+            if err: self.send_json({"error": err}); return
+            self.send_json({"ok": True, "provider": "cloudflare_registrar", "domain": domain, "host": host, "ip": ip})
+            return
+
         if path == "/api/cf/config":
             cfg = cf_load()
             self.send_json({"has_token": bool(cfg.get("token"))})
@@ -1720,21 +2306,24 @@ class Handler(BaseHTTPRequestHandler):
             return
 
         if path == "/api/cf/setup-domain":
-            # Add domain to CF, get its nameservers, set them on Namecheap — all in one
+            # Add domain to CF, get its nameservers, and sync at the selected registrar.
             data = self.read_json()
             domain = data.get("domain","") or ""
             token  = data.get("token","") or cf_load().get("token","")
+            provider = (data.get("provider", "auto") or "auto").strip().lower()
             if not domain: self.send_json({"error": "domain required"}); return
             if not token:  self.send_json({"error": "Cloudflare token required"}); return
             # 1. Add to Cloudflare
             ns, zone_id, err = cf_add_zone(domain, token=token)
             if err: self.send_json({"error": f"Cloudflare: {err}"}); return
             if not ns: self.send_json({"error": "No nameservers returned from Cloudflare"}); return
-            # 2. Set those NS on Namecheap
-            sld, tld = nc_split_domain(domain)
-            nc_err = nc_set_ns(sld, tld, ns)
-            if nc_err: self.send_json({"error": f"Namecheap: {nc_err}", "cf_ns": ns}); return
-            self.send_json({"ok": True, "nameservers": ns, "zone_id": zone_id})
+            # 2. Sync NS to registrar
+            if provider in ("", "auto"):
+                provider = detect_registrar_provider(domain)
+            rerr = registrar_set_ns(provider, domain, ns)
+            if rerr:
+                self.send_json({"error": f"{provider}: {rerr}", "cf_ns": ns, "provider": provider}); return
+            self.send_json({"ok": True, "nameservers": ns, "zone_id": zone_id, "provider": provider})
             return
 
         # ── CF Tunnels ───────────────────────────────────────────────────────
@@ -1903,25 +2492,7 @@ class Handler(BaseHTTPRequestHandler):
                 return
             self.send_json({"ok": True, "service": service, "dns_fixed": dns_fixed})
             return
-            # Point domain A record @ to server IP
-            data = self.read_json()
-            domain = data.get("domain","") or ""
-            ip = data.get("ip","") or ""
-            if not domain or not ip: self.send_json({"error": "domain and ip required"}); return
-            sld, tld = nc_split_domain(domain)
-            hosts, err = nc_get_hosts(sld, tld)
-            if err: self.send_json({"error": err}); return
-            # Remove existing @ A records and add new one
-            hosts = [h for h in hosts if not (h["name"] == "@" and h["type"] == "A")]
-            hosts.insert(0, {"name":"@","type":"A","address":ip,"ttl":"300"})
-            # Also add www CNAME if not present
-            has_www = any(h["name"] == "www" for h in hosts)
-            if not has_www:
-                hosts.append({"name":"www","type":"CNAME","address":"@","ttl":"1800"})
-            err = nc_set_hosts(sld, tld, hosts)
-            if err: self.send_json({"error": err}); return
-            self.send_json({"ok": True, "ip": ip})
-            return
+
 
 
         self.send_json({"error": "Not found"}, 404)
@@ -1933,7 +2504,7 @@ HTML = r"""
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width,initial-scale=1">
-<title>PHP-MNGR</title>
+<title>KillTheHost - PHP-MNGR</title>
 <link rel="preconnect" href="https://fonts.googleapis.com">
 <link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600&family=IBM+Plex+Mono:wght@400;500&display=swap" rel="stylesheet">
 <style>
@@ -1957,10 +2528,14 @@ html,body{height:100%;background:var(--bg);color:var(--t1);font-family:var(--san
 .main-area{flex:1;display:flex;flex-direction:column;overflow:hidden;min-width:0}
 /* Sidebar */
 #sidebar{width:220px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--line);display:flex;flex-direction:column;overflow:hidden}
-.sb-logo{display:flex;align-items:center;gap:10px;padding:16px 14px;border-bottom:1px solid var(--line);flex-shrink:0}
-.sb-logo-mark{width:30px;height:30px;border-radius:var(--r-sm);background:var(--surface);border:1px solid var(--line2);display:flex;align-items:center;justify-content:center;font-size:15px;flex-shrink:0}
-.sb-logo-name{font-size:14px;font-weight:600;color:var(--t1)}
-.sb-logo-sub{font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:1px}
+.sb-logo{display:flex;align-items:flex-start;gap:10px;padding:16px 14px;border-bottom:1px solid var(--line);flex-shrink:0}
+.kth-mark{width:32px;height:32px;border-radius:8px;background:linear-gradient(145deg,#ff56b9 0%,#ef63d6 62%,#c86bff 100%);display:flex;align-items:center;justify-content:center;font-family:"Menlo","Consolas",monospace;font-size:12px;font-weight:700;color:#fff;letter-spacing:-.6px;flex-shrink:0;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);margin-top:1px}
+.sb-logo-main{display:flex;flex-direction:column;gap:1px}
+.kth-logo{display:flex;align-items:center;gap:0;font-size:18px;font-weight:800;line-height:1}
+.kth-word{color:#f4f5fb;letter-spacing:-.35px}
+.kth-word.the{background:linear-gradient(135deg,#ff5ab8 0%,#f468cd 55%,#c96dff 100%);-webkit-background-clip:text;background-clip:text;-webkit-text-fill-color:transparent}
+.sb-logo-name{font-size:13px;font-weight:700;color:var(--t1);letter-spacing:.25px}
+.sb-logo-sub{font-family:var(--mono);font-size:9px;color:var(--t3);margin-top:1px;text-transform:uppercase;letter-spacing:.25px}
 .sb-nav{flex:1;overflow-y:auto;padding:8px}
 .sb-section{font-family:var(--mono);font-size:9px;font-weight:500;letter-spacing:1.2px;text-transform:uppercase;color:var(--t3);padding:10px 10px 4px}
 .sb-item{display:flex;align-items:center;gap:10px;padding:8px 10px;border-radius:var(--r-md);cursor:pointer;color:var(--t2);font-size:13px;font-weight:400;transition:background .1s,color .1s;user-select:none;margin-bottom:1px}
@@ -2128,9 +2703,13 @@ a:hover{text-decoration:underline}
 
 <div id="sidebar">
   <div class="sb-logo">
-    <div>
+    <div class="kth-mark">&gt;_</div>
+    <div class="sb-logo-main">
+      <div class="kth-logo">
+        <span class="kth-word">Kill</span><span class="kth-word the">The</span><span class="kth-word">Host</span>
+      </div>
       <div class="sb-logo-name">PHP-MNGR</div>
-      <div class="sb-logo-sub">Local development → public web, without friction</div>
+      <div class="sb-logo-sub">KillTheHost Suite · PHP Manager</div>
     </div>
   </div>
   <div class="sb-nav">
@@ -2324,20 +2903,36 @@ a:hover{text-decoration:underline}
 
 <!-- Combined API Settings Modal -->
 <div id="cf-settings-modal" style="display:none;position:fixed;inset:0;background:rgba(0,0,0,.65);backdrop-filter:blur(6px);z-index:400;align-items:center;justify-content:center">
-  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:540px;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.6)">
+  <div style="background:var(--bg2);border:1px solid var(--border2);border-radius:12px;width:620px;max-width:96vw;max-height:92vh;overflow-y:auto;box-shadow:0 24px 60px rgba(0,0,0,.6)">
     <div style="display:flex;align-items:center;justify-content:space-between;padding:14px 18px;border-bottom:1px solid var(--border)">
       <div style="font-size:13px;font-weight:600">⚙ API Settings</div>
       <button class="modal-close" onclick="closeCFSettings()">×</button>
     </div>
     <!-- Tabs -->
-    <div style="display:flex;border-bottom:1px solid var(--border)">
+    <div style="display:flex;flex-wrap:wrap;border-bottom:1px solid var(--border)">
       <button id="stab-cf" onclick="switchSettingsTab('cf')"
-        style="flex:1;padding:10px;font-size:12px;font-weight:500;background:var(--bg3);border:none;border-bottom:2px solid #f6821f;color:var(--text);cursor:pointer;font-family:var(--font)">
+        style="flex:1 1 33.333%;min-width:0;padding:9px 8px;font-size:11px;font-weight:500;line-height:1.25;white-space:normal;text-align:center;background:var(--bg3);border:none;border-bottom:2px solid #f6821f;color:var(--text);cursor:pointer;font-family:var(--font)">
         ☁ Cloudflare
       </button>
       <button id="stab-nc" onclick="switchSettingsTab('nc')"
-        style="flex:1;padding:10px;font-size:12px;font-weight:500;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer;font-family:var(--font)">
+        style="flex:1 1 33.333%;min-width:0;padding:9px 8px;font-size:11px;font-weight:500;line-height:1.25;white-space:normal;text-align:center;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer;font-family:var(--font)">
         🌐 Namecheap
+      </button>
+      <button id="stab-gd" onclick="switchSettingsTab('gd')"
+        style="flex:1 1 33.333%;min-width:0;padding:9px 8px;font-size:11px;font-weight:500;line-height:1.25;white-space:normal;text-align:center;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer;font-family:var(--font)">
+        🏷 GoDaddy
+      </button>
+      <button id="stab-pb" onclick="switchSettingsTab('pb')"
+        style="flex:1 1 33.333%;min-width:0;padding:9px 8px;font-size:11px;font-weight:500;line-height:1.25;white-space:normal;text-align:center;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer;font-family:var(--font)">
+        🐷 Porkbun
+      </button>
+      <button id="stab-io" onclick="switchSettingsTab('io')"
+        style="flex:1 1 33.333%;min-width:0;padding:9px 8px;font-size:11px;font-weight:500;line-height:1.25;white-space:normal;text-align:center;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer;font-family:var(--font)">
+        🇩🇪 IONOS
+      </button>
+      <button id="stab-cfr" onclick="switchSettingsTab('cfr')"
+        style="flex:1 1 33.333%;min-width:0;padding:9px 8px;font-size:11px;font-weight:500;line-height:1.25;white-space:normal;text-align:center;background:transparent;border:none;border-bottom:2px solid transparent;color:var(--text2);cursor:pointer;font-family:var(--font)">
+        🛡 Cloudflare Registrar
       </button>
     </div>
 
@@ -2358,7 +2953,7 @@ a:hover{text-decoration:underline}
         <label class="form-label">Cloudflare API Token</label>
         <div style="display:flex;gap:8px">
           <input class="form-input" id="cf-settings-token" type="password" placeholder="Paste token here" style="flex:1"/>
-          <button class="btn btn-outline" onclick="cfToggleTokenVisible()">👁</button>
+          <button class="btn btn-outline" onclick="toggleSecretField('cf-settings-token')">👁</button>
         </div>
       </div>
       <div style="display:flex;gap:8px;margin-top:4px">
@@ -2384,7 +2979,10 @@ a:hover{text-decoration:underline}
       </div>
       <div class="form-group">
         <label class="form-label">API Key</label>
-        <input class="form-input" id="nc-settings-apikey" type="password" placeholder="Paste API key"/>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="nc-settings-apikey" type="password" placeholder="Paste API key" style="flex:1"/>
+          <button class="btn btn-outline" onclick="toggleSecretField('nc-settings-apikey')">👁</button>
+        </div>
       </div>
       <div class="form-group">
         <label class="form-label">Client IP (whitelisted in Namecheap)</label>
@@ -2393,9 +2991,108 @@ a:hover{text-decoration:underline}
       </div>
       <div style="display:flex;gap:8px;margin-top:4px">
         <button class="btn btn-outline" onclick="closeCFSettings()">Cancel</button>
-        <button class="btn btn-primary btn-lg" id="nc-settings-save-btn" onclick="ncSettingsSave()" style="flex:1">Save Namecheap</button>
+        <button class="btn btn-primary btn-lg" id="nc-settings-save-btn" onclick="ncSettingsSave()" style="flex:1">Save &amp; Verify</button>
       </div>
       <div id="nc-settings-result" style="margin-top:10px;font-size:12px;min-height:18px"></div>
+    </div>
+
+    <!-- GoDaddy Tab -->
+    <div id="stab-gd-body" style="padding:18px;display:none">
+      <div id="gd-settings-status-bar"></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.8">
+        <strong>Get API credentials:</strong><br>
+        1. Open GoDaddy Developer Portal → <a href="https://developer.godaddy.com/keys" target="_blank" style="color:#f6821f">API Keys ↗</a><br>
+        2. Create a Production key pair<br>
+        3. Paste API key and secret below
+      </div>
+      <div class="form-group">
+        <label class="form-label">GoDaddy API Key</label>
+        <input class="form-input" id="gd-settings-apikey" placeholder="Paste API key"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">GoDaddy API Secret</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="gd-settings-secret" type="password" placeholder="Paste API secret" style="flex:1"/>
+          <button class="btn btn-outline" onclick="toggleSecretField('gd-settings-secret')">👁</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-outline" onclick="closeCFSettings()">Cancel</button>
+        <button class="btn btn-primary btn-lg" id="gd-settings-save-btn" onclick="gdSettingsSave()" style="flex:1">Save &amp; Verify</button>
+      </div>
+      <div id="gd-settings-result" style="margin-top:10px;font-size:12px;min-height:18px"></div>
+    </div>
+
+    <!-- Porkbun Tab -->
+    <div id="stab-pb-body" style="padding:18px;display:none">
+      <div id="pb-settings-status-bar"></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.8">
+        <strong>Get API credentials:</strong><br>
+        1. Log into Porkbun → Account → API Access<br>
+        2. Enable API access for your account<br>
+        3. Copy API Key and Secret Key below
+      </div>
+      <div class="form-group">
+        <label class="form-label">Porkbun API Key</label>
+        <input class="form-input" id="pb-settings-apikey" placeholder="Paste API key"/>
+      </div>
+      <div class="form-group">
+        <label class="form-label">Porkbun Secret Key</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="pb-settings-secret" type="password" placeholder="Paste secret key" style="flex:1"/>
+          <button class="btn btn-outline" onclick="toggleSecretField('pb-settings-secret')">👁</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-outline" onclick="closeCFSettings()">Cancel</button>
+        <button class="btn btn-primary btn-lg" id="pb-settings-save-btn" onclick="pbSettingsSave()" style="flex:1">Save &amp; Verify</button>
+      </div>
+      <div id="pb-settings-result" style="margin-top:10px;font-size:12px;min-height:18px"></div>
+    </div>
+
+    <!-- IONOS Tab -->
+    <div id="stab-io-body" style="padding:18px;display:none">
+      <div id="io-settings-status-bar"></div>
+      <div style="background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:10px 14px;font-size:12px;color:var(--text2);margin-bottom:14px;line-height:1.8">
+        <strong>Get API credentials:</strong><br>
+        1. Log into IONOS account and open API/DNS token management<br>
+        2. Create a token with DNS management permissions<br>
+        3. Paste token below as API key
+      </div>
+      <div class="form-group">
+        <label class="form-label">IONOS API Key / Token</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="io-settings-apikey" type="password" placeholder="Paste API key/token" style="flex:1"/>
+          <button class="btn btn-outline" onclick="toggleSecretField('io-settings-apikey')">👁</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-outline" onclick="closeCFSettings()">Cancel</button>
+        <button class="btn btn-primary btn-lg" id="io-settings-save-btn" onclick="ioSettingsSave()" style="flex:1">Save &amp; Verify</button>
+      </div>
+      <div id="io-settings-result" style="margin-top:10px;font-size:12px;min-height:18px"></div>
+    </div>
+
+    <!-- Cloudflare Registrar Tab -->
+    <div id="stab-cfr-body" style="padding:18px;display:none">
+      <div id="cfr-settings-status-bar"></div>
+      <div style="background:var(--yel-bg);border:1px solid var(--yel-bd);border-radius:7px;padding:10px 14px;font-size:12px;color:var(--yellow);margin-bottom:14px;line-height:1.8">
+        <strong>Cloudflare Registrar API token:</strong><br>
+        Use a Cloudflare API token with <strong>Zone → Read</strong> and <strong>Zone → DNS → Edit</strong> permissions.<br>
+        If left empty, PHP-MNGR can reuse your Cloudflare tunnel token when available.
+      </div>
+      <div class="form-group">
+        <label class="form-label">Cloudflare Registrar Token</label>
+        <div style="display:flex;gap:8px">
+          <input class="form-input" id="cfr-settings-token" type="password" placeholder="Paste token (optional if Cloudflare tab already configured)" style="flex:1"/>
+          <button class="btn btn-outline" onclick="toggleSecretField('cfr-settings-token')">👁</button>
+        </div>
+      </div>
+      <div style="display:flex;gap:8px;margin-top:4px">
+        <button class="btn btn-outline" onclick="closeCFSettings()">Cancel</button>
+        <button class="btn btn-primary btn-lg" id="cfr-settings-save-btn" onclick="cfrSettingsSave()" style="flex:1">Save &amp; Verify</button>
+      </div>
+      <div id="cfr-settings-result" style="margin-top:10px;font-size:12px;min-height:18px"></div>
     </div>
   </div>
 </div>
@@ -2899,22 +3596,26 @@ function cfDomainRow(d, zone) {
   </div>`;
 }
 
-// ─── Add Namecheap domain to Cloudflare (+ auto-update NS) ───────────────────
+// ─── Add domain to Cloudflare (+ registrar NS sync when possible) ───────────────────
 async function cfAddDomainToCloudflare(domain) {
   notify(`Adding ${domain} to Cloudflare...`, 'info');
-  const r = await apiFetch('/api/cf/setup-domain', {domain});
+  const r = await apiFetch('/api/cf/setup-domain', {domain, provider: 'auto'});
   if (r.ok) {
     const ns = r.nameservers || [];
-    if (cfState.ncConfigured) {
-      notify(`✓ ${domain} added — Namecheap NS updated! Propagation: 5–30 min.`, 'ok');
-    } else {
+    const provider = r.provider || 'registrar';
+    notify(`✓ ${domain} added — ${provider} sync complete. Propagation: 5–30 min.`, 'ok');
+    if (!ns.length) {
+      notify(`No nameservers returned by Cloudflare for ${domain}.`, 'info');
+    }
+    renderDomainsView(document.getElementById('content'));
+  } else {
+    const ns = r.cf_ns || [];
+    if (ns.length) {
       cfNSPending = {domain, ns};
       document.getElementById('cf-ns-domain').textContent = domain;
       document.getElementById('cf-ns-list').innerHTML = ns.map(n => `<div style="font-family:var(--mono);font-size:12px;padding:3px 0">${n}</div>`).join('');
       document.getElementById('cf-ns-modal').style.display = 'flex';
     }
-    renderDomainsView(document.getElementById('content'));
-  } else {
     notify('Error: '+(r.error||'?'), 'err');
   }
 }
@@ -3119,21 +3820,56 @@ async function cfShowLogs(siteId) {
 }
 
 // ─── Combined API Settings Modal ─────────────────────────────────────────────
-async function openCFSettings(tab) {
-  document.getElementById('cf-settings-modal').style.display = 'flex';
-  switchSettingsTab(tab || 'cf');
-  // Pre-populate CF status
-  const cfr = await fetch('/api/cf/config').then(r=>r.json());
-  const bar = document.getElementById('cf-settings-status-bar');
-  if (bar) bar.innerHTML = cfr.has_token
-    ? `<div style="display:flex;align-items:center;gap:8px;background:#10a37f12;border:1px solid #10a37f44;border-radius:7px;padding:8px 12px;font-size:12px;margin-bottom:12px"><span class="port-led led-green"></span>Cloudflare connected — paste new token to replace.</div>`
-    : '';
-  // Pre-populate NC fields
-  const ncr = await fetch('/api/nc/config').then(r=>r.json());
-  const ncBar = document.getElementById('nc-settings-status-bar');
-  if (ncBar) ncBar.innerHTML = ncr.has_key
-    ? `<div style="display:flex;align-items:center;gap:8px;background:#10a37f12;border:1px solid #10a37f44;border-radius:7px;padding:8px 12px;font-size:12px;margin-bottom:12px"><span class="port-led led-green"></span>Namecheap connected.</div>`
-    : '';
+const SETTINGS_TABS = ['cf', 'nc', 'gd', 'pb', 'io', 'cfr'];
+const SETTINGS_TAB_STYLE = {
+  cf:  {border: '#f6821f'},
+  nc:  {border: 'var(--green)'},
+  gd:  {border: '#00a4ff'},
+  pb:  {border: '#ff7a59'},
+  io:  {border: '#4b7bec'},
+  cfr: {border: '#f6821f'}
+};
+
+function toggleSecretField(inputId) {
+  const inp = document.getElementById(inputId);
+  if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+}
+
+function setSettingsStatusBar(provider, isConnected, connectedMsg, disconnectedMsg='') {
+  const bar = document.getElementById(`${provider}-settings-status-bar`);
+  if (!bar) return;
+  if (isConnected) {
+    bar.innerHTML = `<div style="display:flex;align-items:center;gap:8px;background:#10a37f12;border:1px solid #10a37f44;border-radius:7px;padding:8px 12px;font-size:12px;margin-bottom:12px"><span class="port-led led-green"></span>${connectedMsg}</div>`;
+  } else if (disconnectedMsg) {
+    bar.innerHTML = `<div style="display:flex;align-items:center;gap:8px;background:var(--bg3);border:1px solid var(--border);border-radius:7px;padding:8px 12px;font-size:12px;margin-bottom:12px"><span class="port-led led-yellow"></span>${disconnectedMsg}</div>`;
+  } else {
+    bar.innerHTML = '';
+  }
+}
+
+function setSettingsResult(provider, message, ok=true) {
+  const res = document.getElementById(`${provider}-settings-result`);
+  if (!res) return;
+  res.innerHTML = `<span style="color:${ok ? 'var(--green)' : 'var(--red)'}">${message}</span>`;
+}
+
+async function loadRegistrarSettings() {
+  const [cfr, ncr, gdr, pbr, ior, cfrr] = await Promise.all([
+    fetch('/api/cf/config').then(r=>r.json()).catch(() => ({})),
+    fetch('/api/nc/config').then(r=>r.json()).catch(() => ({})),
+    fetch('/api/gd/config').then(r=>r.json()).catch(() => ({})),
+    fetch('/api/pb/config').then(r=>r.json()).catch(() => ({})),
+    fetch('/api/io/config').then(r=>r.json()).catch(() => ({})),
+    fetch('/api/cfr/config').then(r=>r.json()).catch(() => ({})),
+  ]);
+
+  setSettingsStatusBar('cf', !!cfr.has_token, 'Cloudflare connected — paste new token to replace.');
+  setSettingsStatusBar('nc', !!ncr.has_key, 'Namecheap connected.', ncr.server_ip ? `Not connected yet — server IP: <span class="mono">${esc(ncr.server_ip)}</span>` : '');
+  setSettingsStatusBar('gd', !!gdr.has_key, 'GoDaddy connected.');
+  setSettingsStatusBar('pb', !!pbr.has_key, 'Porkbun connected.');
+  setSettingsStatusBar('io', !!ior.has_key, 'IONOS connected.');
+  setSettingsStatusBar('cfr', !!cfrr.has_token, 'Cloudflare Registrar connected.');
+
   const nu = document.getElementById('nc-settings-username');
   const ni = document.getElementById('nc-settings-ip');
   if (nu && ncr.username) nu.value = ncr.username;
@@ -3141,48 +3877,57 @@ async function openCFSettings(tab) {
   if (ni && !ni.value && ncr.server_ip) ni.placeholder = ncr.server_ip;
 }
 
+async function openCFSettings(tab) {
+  document.getElementById('cf-settings-modal').style.display = 'flex';
+  switchSettingsTab(tab || 'cf');
+  await loadRegistrarSettings();
+}
+
 function switchSettingsTab(tab) {
-  const cfBody = document.getElementById('stab-cf-body');
-  const ncBody = document.getElementById('stab-nc-body');
-  const cfTab  = document.getElementById('stab-cf');
-  const ncTab  = document.getElementById('stab-nc');
-  if (tab === 'cf') {
-    if (cfBody) cfBody.style.display = '';
-    if (ncBody) ncBody.style.display = 'none';
-    if (cfTab)  { cfTab.style.background='var(--bg3)'; cfTab.style.borderBottomColor='#f6821f'; cfTab.style.color='var(--text)'; }
-    if (ncTab)  { ncTab.style.background='transparent'; ncTab.style.borderBottomColor='transparent'; ncTab.style.color='var(--text2)'; }
-  } else {
-    if (cfBody) cfBody.style.display = 'none';
-    if (ncBody) ncBody.style.display = '';
-    if (ncTab)  { ncTab.style.background='var(--bg3)'; ncTab.style.borderBottomColor='var(--green)'; ncTab.style.color='var(--text)'; }
-    if (cfTab)  { cfTab.style.background='transparent'; cfTab.style.borderBottomColor='transparent'; cfTab.style.color='var(--text2)'; }
-  }
+  SETTINGS_TABS.forEach(t => {
+    const body = document.getElementById(`stab-${t}-body`);
+    const btn  = document.getElementById(`stab-${t}`);
+    const active = t === tab;
+    if (body) body.style.display = active ? '' : 'none';
+    if (btn) {
+      btn.style.background = active ? 'var(--bg3)' : 'transparent';
+      btn.style.borderBottomColor = active ? (SETTINGS_TAB_STYLE[t]?.border || 'var(--green)') : 'transparent';
+      btn.style.color = active ? 'var(--text)' : 'var(--text2)';
+    }
+  });
 }
 
 function closeCFSettings() {
   document.getElementById('cf-settings-modal').style.display = 'none';
 }
 
-function cfToggleTokenVisible() {
-  const inp = document.getElementById('cf-settings-token');
-  if (inp) inp.type = inp.type === 'password' ? 'text' : 'password';
+async function saveRegistrarConfig(provider, endpoint, payload, buttonId, buttonDoneText) {
+  const btn = document.getElementById(buttonId);
+  btn.disabled = true;
+  btn.innerHTML = '<span class="spin">⟳</span> Saving & verifying...';
+
+  const r = await apiFetch(endpoint, payload);
+
+  btn.disabled = false;
+  btn.innerHTML = buttonDoneText;
+
+  if (r.ok) {
+    const msg = r.domain_count !== undefined
+      ? `✓ Connected! Found ${r.domain_count} domain(s).${r.warning ? ` (warning: ${r.warning})` : ''}`
+      : (r.warning ? `✓ Saved with warning: ${r.warning}` : '✓ Saved.');
+    setSettingsResult(provider, esc(msg), true);
+    await loadRegistrarSettings();
+    notify(msg, r.warning ? 'info' : 'ok');
+    setTimeout(() => { closeCFSettings(); renderDomainsView(document.getElementById('content')); }, 1300);
+  } else {
+    setSettingsResult(provider, `✕ ${esc(r.error||'Failed')}`, false);
+  }
 }
 
 async function cfSettingsSave() {
   const token = document.getElementById('cf-settings-token')?.value.trim();
   if (!token) { notify('Paste a token first', 'err'); return; }
-  const btn = document.getElementById('cf-settings-save-btn');
-  const res = document.getElementById('cf-settings-result');
-  btn.disabled = true; btn.innerHTML = '<span class="spin">⟳</span> Verifying...';
-  const r = await apiFetch('/api/cf/save-token', {token});
-  btn.disabled = false; btn.innerHTML = 'Save &amp; Verify';
-  if (r.ok) {
-    if (res) res.innerHTML = `<span style="color:var(--green)">✓ Connected! Found ${r.zone_count||0} zone(s).</span>`;
-    cfState.configured = true;
-    setTimeout(() => { closeCFSettings(); renderDomainsView(document.getElementById('content')); }, 1200);
-  } else {
-    if (res) res.innerHTML = `<span style="color:var(--red)">✕ ${esc(r.error||'Failed')}</span><br><span style="font-size:11px;color:var(--text3)">Check: Zone→DNS→Edit + Account→Cloudflare Tunnel→Edit permissions</span>`;
-  }
+  await saveRegistrarConfig('cf', '/api/cf/save-token', {token}, 'cf-settings-save-btn', 'Save &amp; Verify');
 }
 
 async function ncSettingsSave() {
@@ -3191,21 +3936,35 @@ async function ncSettingsSave() {
   const client_ip = document.getElementById('nc-settings-ip')?.value.trim();
   if (!username) { notify('Username required', 'err'); return; }
   if (!api_key)  { notify('API key required', 'err'); return; }
-  const btn = document.getElementById('nc-settings-save-btn');
-  const res = document.getElementById('nc-settings-result');
-  btn.disabled = true; btn.innerHTML = '<span class="spin">⟳</span> Saving & verifying...';
-  const r = await apiFetch('/api/nc/config', {username, api_key, client_ip});
-  btn.disabled = false; btn.innerHTML = 'Save Namecheap';
-  if (r.ok) {
-    const msg = r.domain_count !== undefined
-      ? `✓ Connected! Found ${r.domain_count} domain(s).` + (r.warning ? ` (warning: ${r.warning})` : '')
-      : '✓ Saved.';
-    if (res) res.innerHTML = `<span style="color:var(--green)">${esc(msg)}</span>`;
-    notify(msg, 'ok');
-    setTimeout(() => { closeCFSettings(); renderDomainsView(document.getElementById('content')); }, 1500);
-  } else {
-    if (res) res.innerHTML = `<span style="color:var(--red)">✕ ${esc(r.error||'Failed')}</span>`;
-  }
+  await saveRegistrarConfig('nc', '/api/nc/config', {username, api_key, client_ip}, 'nc-settings-save-btn', 'Save &amp; Verify');
+}
+
+async function gdSettingsSave() {
+  const api_key = document.getElementById('gd-settings-apikey')?.value.trim();
+  const api_secret = document.getElementById('gd-settings-secret')?.value.trim();
+  if (!api_key) { notify('GoDaddy API key required', 'err'); return; }
+  if (!api_secret) { notify('GoDaddy API secret required', 'err'); return; }
+  await saveRegistrarConfig('gd', '/api/gd/config', {api_key, api_secret}, 'gd-settings-save-btn', 'Save &amp; Verify');
+}
+
+async function pbSettingsSave() {
+  const api_key = document.getElementById('pb-settings-apikey')?.value.trim();
+  const secret_key = document.getElementById('pb-settings-secret')?.value.trim();
+  if (!api_key) { notify('Porkbun API key required', 'err'); return; }
+  if (!secret_key) { notify('Porkbun secret key required', 'err'); return; }
+  await saveRegistrarConfig('pb', '/api/pb/config', {api_key, secret_key}, 'pb-settings-save-btn', 'Save &amp; Verify');
+}
+
+async function ioSettingsSave() {
+  const api_key = document.getElementById('io-settings-apikey')?.value.trim();
+  if (!api_key) { notify('IONOS API key required', 'err'); return; }
+  await saveRegistrarConfig('io', '/api/io/config', {api_key}, 'io-settings-save-btn', 'Save &amp; Verify');
+}
+
+async function cfrSettingsSave() {
+  const token = document.getElementById('cfr-settings-token')?.value.trim();
+  // Token is optional if Cloudflare token is already configured; backend can reuse it.
+  await saveRegistrarConfig('cfr', '/api/cfr/config', token ? {token} : {}, 'cfr-settings-save-btn', 'Save &amp; Verify');
 }
 
 function ncShowSettings() {
