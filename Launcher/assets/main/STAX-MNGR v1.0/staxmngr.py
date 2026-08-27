@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔══════════════════════════════════════════════════════╗
-║       STAX-MNGR  v1.0  —  KillTheHost               ║
+║       STAX-MNGR  v1.0  —  KillTheHost                ║
 ║                                                      ║
 ║   Manage all Docker containers on this system.       ║
 ║   Deploy pre-configured self-hosted app stacks.      ║
