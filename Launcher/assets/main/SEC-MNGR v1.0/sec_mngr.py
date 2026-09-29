@@ -80,6 +80,15 @@ SERVICES = {
     "sec_mngr":  {"label": "SEC-MNGR",  "port": DEFAULT_PORT, "log_dir": None},
 }
 
+# Standard suite ports (Launcher, SEC-MNGR, NODE-MNGR, DB-3NGIN3, STAX-MNGR, MAIL-SRVR, PHP-MNGR)
+SUITE_DEFAULT_PORTS = frozenset({5000, 8080, 7272, 7734, 6161, 6060, 4280})
+
+
+def suite_ports():
+    """All ports owned by KillTheHost suite tools (read live: SEC-MNGR's port can change at runtime)."""
+    return SUITE_DEFAULT_PORTS | {int(m["port"]) for m in SERVICES.values() if m.get("port")}
+
+
 # Docker container name prefixes → owning KillTheHost service
 CONTAINER_SERVICE_PREFIXES = [
     ("phpmngr-",         "php_mngr"),
@@ -729,6 +738,9 @@ class Config:
         return updated
 
     def known_port(self, port, proto="tcp"):
+        # KillTheHost suite ports are always trusted, even if the saved list omits them
+        if proto == "tcp" and port in suite_ports():
+            return True
         for spec in self.get("known_ports"):
             p = spec
             if ":" in spec:
@@ -1969,9 +1981,14 @@ class Monitor:
         for key, s in services.items():
             prev = self.prev_service_state.get(key)
             if prev and prev != s["status"]:
-                sev = "WARN" if s["status"] in ("DOWN", "WARN") else "INFO"
-                self.events.emit(sev, "service", "%s is %s" % (s["label"], s["status"]),
-                                 "%s → %s (%s)" % (prev, s["status"], s["detail"]), service=key)
+                if s["status"] == "DOWN" and key in SERVICES:
+                    # Suite tools are optional — being stopped is not a security issue
+                    self.events.emit("INFO", "service", "%s stopped" % s["label"],
+                                     "%s → %s (%s)" % (prev, s["status"], s["detail"]), service=key)
+                else:
+                    sev = "WARN" if s["status"] in ("DOWN", "WARN") else "INFO"
+                    self.events.emit(sev, "service", "%s is %s" % (s["label"], s["status"]),
+                                     "%s → %s (%s)" % (prev, s["status"], s["detail"]), service=key)
             elif prev is None and s["status"] == "WARN":
                 self.events.emit("WARN", "service", "%s exposed on all interfaces" % s["label"], s["detail"],
                                  service=key)
