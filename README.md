@@ -238,6 +238,8 @@ The launcher opens automatically at **http://localhost:5000** and lets you start
 KillTheHost/
 ├── launch.sh                   ← Linux / macOS entry point
 ├── launch.bat                  ← Windows entry point
+├── stop.sh / restart.sh        ← Stop / restart the launcher (Linux / macOS)
+├── stop.bat / restart.bat      ← Stop / restart the launcher (Windows)
 ├── LICENSE
 ├── README.md
 └── Launcher/
@@ -275,6 +277,22 @@ From there you can:
 - **Filter** console output by service
 
 To stop the launcher itself, press `Ctrl+C` in the terminal. It will gracefully shut down any running services first.
+
+### Stopping & Restarting
+
+If the launcher is running in the background (or in another terminal), use the helper scripts in the project root:
+
+| Platform | Stop | Restart |
+|---|---|---|
+| Linux / macOS | `./stop.sh` | `./restart.sh` |
+| Windows | `stop.bat` | `restart.bat` |
+
+- **stop** finds the launcher via its PID file (`~/.killthehost/launcher.pid`) or whatever is listening on port `5000`, sends a graceful stop (SIGTERM, so managed services shut down cleanly) and force-kills it after 3 seconds if needed.
+- **restart** runs the stop script, waits 2 seconds, then starts the launcher again via `launch.sh` / `launch.bat`.
+
+First time on Linux / macOS: `chmod +x stop.sh restart.sh`
+
+> **Gtk module warnings (Linux):** On Debian/Ubuntu, `launch.sh` automatically installs `libcanberra-gtk-module`, `libcanberra-gtk3-module` and `gir1.2-packagekitglib-2.0` if they're missing, which silences the `Failed to load module "canberra-gtk-module"` / `"pk-gtk-module"` warnings when panels open in the browser. If the install can't run (no sudo), the launcher still starts — install them manually with `sudo apt-get install -y libcanberra-gtk-module libcanberra-gtk3-module gir1.2-packagekitglib-2.0`.
 
 ### Connecting a Domain
 1. Whitelist your public IP address in the Namecheap API settings to allow external requests

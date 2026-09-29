@@ -93,6 +93,63 @@ if [ "$OS" = "Linux" ]; then
     fi
 fi
 
+# ── Linux: auto-install Gtk modules (silences canberra/pk-gtk warnings) ──
+# Debian/Ubuntu only. Non-blocking: any failure prints a notice and the
+# launcher still starts. Packages the distro doesn't ship are skipped.
+# Runs once; delete ~/.killthehost/gtk-modules.checked to re-run the check.
+GTK_MARKER="$HOME/.killthehost/gtk-modules.checked"
+if [ "$OS" = "Linux" ] && [ ! -f "$GTK_MARKER" ] && \
+   command -v dpkg > /dev/null 2>&1 && command -v apt-get > /dev/null 2>&1; then
+    GTK_PKGS="libcanberra-gtk-module libcanberra-gtk3-module packagekit-gtk3-module gir1.2-packagekitglib-2.0"
+    MISSING=""
+    for pkg in $GTK_PKGS; do
+        if ! dpkg -s "$pkg" 2>/dev/null | grep -q "^Status: install ok installed"; then
+            MISSING="$MISSING $pkg"
+        fi
+    done
+    if [ -n "$MISSING" ]; then
+        echo "  [SEC-MNGR] Installing required Gtk modules..."
+        SUDO=""
+        if [ "$(id -u)" -ne 0 ]; then
+            if command -v sudo > /dev/null 2>&1; then SUDO="sudo"; else SUDO="none"; fi
+        fi
+        if [ "$SUDO" = "none" ]; then
+            echo "  [NOTICE] Could not install Gtk modules automatically (sudo not found)."
+            echo "  Fix manually: apt-get install -y$MISSING"
+        else
+            # Keep only packages this distro actually provides
+            available() {
+                AVAIL=""
+                for pkg in $MISSING; do
+                    cand="$(apt-cache policy "$pkg" 2>/dev/null | awk '/Candidate:/ {print $2}')"
+                    if [ -n "$cand" ] && [ "$cand" != "(none)" ]; then AVAIL="$AVAIL $pkg"; fi
+                done
+            }
+            available
+            if [ -z "$AVAIL" ]; then
+                $SUDO apt-get update > /dev/null 2>&1
+                available
+            fi
+            if [ -z "$AVAIL" ]; then
+                echo "  [NOTICE] Gtk module packages not available on this distro — skipping."
+                mkdir -p "$HOME/.killthehost" && touch "$GTK_MARKER"
+            elif $SUDO apt-get install -y $AVAIL > /dev/null 2>&1 || \
+                 { $SUDO apt-get update > /dev/null 2>&1 && \
+                   $SUDO apt-get install -y $AVAIL > /dev/null 2>&1; }; then
+                echo "  [SEC-MNGR] Gtk modules installed:$AVAIL"
+                mkdir -p "$HOME/.killthehost" && touch "$GTK_MARKER"
+            else
+                echo "  [NOTICE] Gtk module install failed — continuing anyway."
+                echo "  Fix manually: sudo apt-get install -y$AVAIL"
+            fi
+        fi
+        echo ""
+    fi
+fi
+
+# Tell launcher.py the Gtk check already ran here (skips its fallback)
+[ "$OS" = "Linux" ] && export KTH_GTK_CHECKED=1
+
 # ── Launch ──────────────────────────────────────────────────
 echo ""
 echo "  KillTheHost Launcher"
