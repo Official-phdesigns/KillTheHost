@@ -2241,7 +2241,7 @@ SEC_HEADERS = {
     "Cross-Origin-Resource-Policy": "same-origin",
     "Permissions-Policy": "camera=(), microphone=(), geolocation=()",
     "Content-Security-Policy": "default-src 'self'; script-src 'self' 'unsafe-inline'; "
-                               "style-src 'self' 'unsafe-inline'; img-src 'self' data:; "
+                               "style-src 'self' 'unsafe-inline'; img-src 'self' data: https://www.phdesigns.net; "
                                "connect-src 'self'; frame-ancestors 'none'; base-uri 'none'; form-action 'self'",
 }
 
@@ -2603,16 +2603,21 @@ class Handler(BaseHTTPRequestHandler):
 # ─────────────────────────────────────────────────────────────────────────────
 
 FAVICON = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
-           '<rect width="64" height="64" rx="14" fill="#e879a8"/>'
-           '<path d="M32 13 17 20v11c0 10 6 17 15 20 9-3 15-10 15-20V20z" fill="white" opacity="0.9"/>'
-           '<path d="M26 33h12v9H26zM28 33v-4a4 4 0 0 1 8 0v4" fill="none" stroke="#e879a8" stroke-width="2.5"/>'
+           '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
+           '<stop offset="0" stop-color="#ff56b9"/><stop offset=".62" stop-color="#ef63d6"/>'
+           '<stop offset="1" stop-color="#c86bff"/></linearGradient></defs>'
+           '<rect width="64" height="64" rx="17" fill="url(#g)"/>'
+           '<text x="32" y="42" text-anchor="middle" font-family="Menlo,Consolas,monospace" '
+           'font-size="26" font-weight="700" fill="#fff" letter-spacing="-1">&gt;_</text>'
            '</svg>')
 
 HTML = r"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
 <title>SEC-MNGR · Security Manager</title>
-<link rel="icon" href="/favicon.ico" type="image/svg+xml">
+<link rel="shortcut icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
+<link rel="icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
+<link rel="alternate icon" href="/favicon.ico" type="image/svg+xml">
 <style>
 :root{
   --bg:#0d0d0f;--sidebar:#111114;--panel:#17171b;--panel2:#1d1d22;
@@ -2628,7 +2633,7 @@ a{color:var(--accent)}
 .shell{display:flex;height:100vh;overflow:hidden}
 .sidebar{width:185px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
 .sb-brand{padding:14px 12px 12px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start}
-.sb-icon{width:36px;height:36px;flex-shrink:0;background:var(--pink);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.sb-icon{width:34px;height:34px;flex-shrink:0;border-radius:9px;background:linear-gradient(145deg,#ff56b9 0%,#ef63d6 62%,#c86bff 100%);display:flex;align-items:center;justify-content:center;font-family:"Menlo","Consolas",monospace;font-size:13px;font-weight:700;color:#fff;letter-spacing:-.6px;box-shadow:inset 0 0 0 1px rgba(255,255,255,.14);margin-top:1px}
 .sb-title{font-size:14px;font-weight:700;color:var(--txt);letter-spacing:-.3px}
 .sb-the{color:var(--pink)}
 .sb-tool{font-size:10px;font-weight:600;color:var(--txt);letter-spacing:.5px;margin-top:1px;text-transform:uppercase}
@@ -2708,7 +2713,7 @@ label.f{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--di
 <div class="shell">
 <aside class="sidebar">
   <div class="sb-brand">
-    <div class="sb-icon">&#x1F6E1;</div>
+    <div class="sb-icon">&gt;_</div>
     <div>
       <div class="sb-title">Kill<span class="sb-the">The</span>Host</div>
       <div class="sb-tool">SEC-MNGR</div>
