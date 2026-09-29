@@ -3062,6 +3062,32 @@ class SecServer(ThreadingHTTPServer):
     request_queue_size = 64
 
 
+def _open_browser_quiet(url):
+    """Open the dashboard without Gtk/Flatpak-portal chatter on the console.
+    Sandboxed browsers can't load host Gtk modules, so strip them from GTK_MODULES."""
+    env = dict(os.environ)
+    mods = [m for m in env.get("GTK_MODULES", "").split(":")
+            if m and m not in ("canberra-gtk-module", "pk-gtk-module")]
+    if mods:
+        env["GTK_MODULES"] = ":".join(mods)
+    else:
+        env.pop("GTK_MODULES", None)
+    if sys.platform.startswith("linux") and not env.get("DBUS_SESSION_BUS_ADDRESS"):
+        bus = "/run/user/%d/bus" % os.getuid()
+        if os.path.exists(bus):
+            env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=" + bus
+    opener = shutil.which("xdg-open") if sys.platform.startswith("linux") else None
+    if opener:
+        try:
+            subprocess.Popen([opener, url], env=env, stdin=subprocess.DEVNULL,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
+            return
+        except OSError:
+            pass
+    webbrowser.open(url)
+
+
 def main():
     if sys.version_info < (3, 8):
         sys.exit("SEC-MNGR requires Python 3.8+")
@@ -3106,7 +3132,7 @@ def main():
     print("=" * 62, flush=True)
 
     if not args.no_browser and os.environ.get("SECMNGR_NO_BROWSER") != "1" and CORE.cfg.get("open_browser"):
-        threading.Timer(1.0, lambda: webbrowser.open(url)).start()
+        threading.Timer(1.0, lambda: _open_browser_quiet(url)).start()
 
     def _term(signum, frame):
         raise KeyboardInterrupt

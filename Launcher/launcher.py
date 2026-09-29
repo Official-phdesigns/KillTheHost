@@ -281,7 +281,7 @@ class ServiceProcess:
         try:
             for line in self._proc.stdout:
                 s = line.rstrip()
-                if s:
+                if s and not is_browser_noise(s):
                     self._log_entry(s, "output")
         except Exception:
             pass
@@ -1081,10 +1081,11 @@ def preflight() -> list:
 # ────
 
 LAUNCHER_PID_FILE = LAUNCHER_LOG_DIR / "launcher.pid"
-GTK_MARKER        = LAUNCHER_LOG_DIR / "gtk-modules.checked"   # delete to re-run the check
+GTK_MARKER        = LAUNCHER_LOG_DIR / "gtk-modules.v2.checked"   # delete to re-run the check
 GTK_PACKAGES = [
     "libcanberra-gtk-module", "libcanberra-gtk3-module",   # canberra-gtk-module
     "packagekit-gtk3-module", "gir1.2-packagekitglib-2.0",  # pk-gtk-module
+    "dbus-x11",                                             # dbus-launch
 ]
 
 
@@ -1102,6 +1103,59 @@ def _remove_pid_file():
             LAUNCHER_PID_FILE.unlink()
     except OSError:
         pass
+
+
+GTK_NOISY_MODULES = {"canberra-gtk-module", "pk-gtk-module"}
+BROWSER_NOISE = (
+    'Failed to load module "canberra-gtk-module"',
+    'Failed to load module "pk-gtk-module"',
+    "is the Flatpak D-Bus portal working?",
+    'Failed to execute child process "dbus-launch"',
+    "Failed to execute child process \u201cdbus-launch\u201d",
+)
+
+
+def prepare_gui_env():
+    """Linux: make browsers opened by the launcher and every manager start cleanly.
+    Changes os.environ, so all child services inherit it.
+    - Drops canberra/pk-gtk from GTK_MODULES. Sandboxed (Flatpak/Snap) browsers
+      can never load host Gtk modules, so installing packages alone can't silence them.
+    - Points DBUS_SESSION_BUS_ADDRESS at the user's session bus when it's unset,
+      so the Flatpak portal doesn't fall back to the missing `dbus-launch`."""
+    if SYSTEM != "Linux":
+        return
+    mods = os.environ.get("GTK_MODULES")
+    if mods is not None:
+        kept = [m for m in mods.split(":") if m and m not in GTK_NOISY_MODULES]
+        if kept:
+            os.environ["GTK_MODULES"] = ":".join(kept)
+        else:
+            os.environ.pop("GTK_MODULES", None)
+    if not os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+        bus = Path(f"/run/user/{os.getuid()}/bus")
+        if bus.exists():
+            os.environ["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus}"
+    if not os.environ.get("XDG_RUNTIME_DIR"):
+        rt = Path(f"/run/user/{os.getuid()}")
+        if rt.is_dir():
+            os.environ["XDG_RUNTIME_DIR"] = str(rt)
+
+
+def is_browser_noise(line: str) -> bool:
+    return any(n in line for n in BROWSER_NOISE)
+
+
+def open_browser_quiet(url: str):
+    """Open url in the default browser without leaking Gtk/portal chatter to the console."""
+    if SYSTEM == "Linux" and shutil.which("xdg-open"):
+        try:
+            subprocess.Popen(["xdg-open", url], stdin=subprocess.DEVNULL,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
+            return
+        except OSError:
+            pass
+    webbrowser.open(url)
 
 
 def ensure_gtk_modules():
@@ -1194,6 +1248,7 @@ def main():
 """)
 
     ensure_gtk_modules()
+    prepare_gui_env()
 
     issues = preflight()
     if issues:
@@ -1237,7 +1292,7 @@ def main():
 
     def _open_browser():
         time.sleep(0.9)
-        webbrowser.open(url)
+        open_browser_quiet(url)
 
     threading.Thread(target=_open_browser, daemon=True).start()
 

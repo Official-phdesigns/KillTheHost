@@ -96,11 +96,11 @@ fi
 # ── Linux: auto-install Gtk modules (silences canberra/pk-gtk warnings) ──
 # Debian/Ubuntu only. Non-blocking: any failure prints a notice and the
 # launcher still starts. Packages the distro doesn't ship are skipped.
-# Runs once; delete ~/.killthehost/gtk-modules.checked to re-run the check.
-GTK_MARKER="$HOME/.killthehost/gtk-modules.checked"
+# Runs once; delete ~/.killthehost/gtk-modules.v2.checked to re-run the check.
+GTK_MARKER="$HOME/.killthehost/gtk-modules.v2.checked"
 if [ "$OS" = "Linux" ] && [ ! -f "$GTK_MARKER" ] && \
    command -v dpkg > /dev/null 2>&1 && command -v apt-get > /dev/null 2>&1; then
-    GTK_PKGS="libcanberra-gtk-module libcanberra-gtk3-module packagekit-gtk3-module gir1.2-packagekitglib-2.0"
+    GTK_PKGS="libcanberra-gtk-module libcanberra-gtk3-module packagekit-gtk3-module gir1.2-packagekitglib-2.0 dbus-x11"
     MISSING=""
     for pkg in $GTK_PKGS; do
         if ! dpkg -s "$pkg" 2>/dev/null | grep -q "^Status: install ok installed"; then
@@ -144,6 +144,18 @@ if [ "$OS" = "Linux" ] && [ ! -f "$GTK_MARKER" ] && \
             fi
         fi
         echo ""
+    fi
+fi
+
+# ── Linux: quiet browser start-up (Flatpak/Snap browsers can't load host Gtk
+#    modules, so drop them from GTK_MODULES; give the portal a session bus) ──
+if [ "$OS" = "Linux" ]; then
+    if [ -n "${GTK_MODULES:-}" ]; then
+        GTK_MODULES="$(printf '%s' "$GTK_MODULES" | tr ':' '\n' | grep -v -x -e canberra-gtk-module -e pk-gtk-module | paste -sd: -)"
+        if [ -n "$GTK_MODULES" ]; then export GTK_MODULES; else unset GTK_MODULES; fi
+    fi
+    if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -S "/run/user/$(id -u)/bus" ]; then
+        export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
     fi
 fi
 

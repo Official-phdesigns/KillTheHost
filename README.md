@@ -292,7 +292,7 @@ If the launcher is running in the background (or in another terminal), use the h
 
 First time on Linux / macOS: `chmod +x stop.sh restart.sh`
 
-> **Gtk module warnings (Linux):** On Debian/Ubuntu, `launch.sh` automatically installs `libcanberra-gtk-module`, `libcanberra-gtk3-module` and `gir1.2-packagekitglib-2.0` if they're missing, which silences the `Failed to load module "canberra-gtk-module"` / `"pk-gtk-module"` warnings when panels open in the browser. If the install can't run (no sudo), the launcher still starts — install them manually with `sudo apt-get install -y libcanberra-gtk-module libcanberra-gtk3-module gir1.2-packagekitglib-2.0`.
+> **Gtk / D-Bus browser warnings (Linux):** `Failed to load module "canberra-gtk-module"` / `"pk-gtk-module"` and `is the Flatpak D-Bus portal working? ... dbus-launch` come from the browser, not the panels. The launcher handles them automatically: it removes those two modules from `GTK_MODULES` (sandboxed Flatpak/Snap browsers can't load host modules anyway), points the browser at your session D-Bus, opens browsers quietly, and filters any leftover lines from service logs. On Debian/Ubuntu, `launch.sh` also installs `libcanberra-gtk-module`, `libcanberra-gtk3-module`, `packagekit-gtk3-module`, `gir1.2-packagekitglib-2.0` and `dbus-x11` once (delete `~/.killthehost/gtk-modules.v2.checked` to re-run). If sudo isn't available the launcher still starts — install manually with `sudo apt-get install -y libcanberra-gtk-module libcanberra-gtk3-module dbus-x11`.
 
 ### Connecting a Domain
 1. Whitelist your public IP address in the Namecheap API settings to allow external requests
