@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔════╗                                        ╔════╗
-║      KillTheHost  —  Unified Launcher v1.4       ║
+║      KillTheHost  —  Unified Launcher v1.5       ║
 ║                                                  ║
 ║      Located at KillTheHost/Launcher/assets/     ║
 ║   Run via launch.bat / launch.sh in repo root    ║
@@ -36,7 +36,7 @@ from urllib.parse import urlparse
 LAUNCHER_PORT = 5000
 SYSTEM        = platform.system()          # "Linux" | "Darwin" | "Windows"
 BASE          = Path(__file__).parent.resolve()
-VERSION       = "1.4"
+VERSION       = "1.5"
 
 def _get_docker_version() -> str:
     """Return Docker version string, or 'Not found' if unavailable."""
@@ -110,7 +110,7 @@ SERVICES = {
         "label"    : "SEC-MNGR",
         "subtitle" : "Security Manager & Threat Dashboard",
         "version"  : "v1.0",
-        "dir"      : "assets/main",
+        "dir"      : "assets/main/SEC-MNGR v1.0",
         "script"   : "sec_mngr.py",
         "port"     : 8080,
         "color"    : "#DC2626",

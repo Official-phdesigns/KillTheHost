@@ -1,6 +1,6 @@
-<h1 align="center">KillTheHost v1.4</h1>
+<h1 align="center">KillTheHost v1.5</h1>
 <p align="center">
-  <img src="https://img.shields.io/badge/Latest-v1.4.0-brightgreen" />
+  <img src="https://img.shields.io/badge/Latest-v1.5.0-brightgreen" />
 </p>
 <br/>
 <p align="center">
@@ -23,8 +23,8 @@
 
 <br/>
 
-> **KillTheHost** brings together **PHP-MNGR**, **DB-3NGIN3**, **MAIL-SRVR**, **STAX-MNGR**, and **NODE-MNGR** into one unified workflow —  
-> run your stack locally, manage your databases, host your own email, deploy Docker stacks, manage Node.js apps, sync real domains, and go live in a click.
+> **KillTheHost** brings together **PHP-MNGR**, **DB-3NGIN3**, **MAIL-SRVR**, **STAX-MNGR**, **NODE-MNGR**, and **SEC-MNGR** into one unified workflow —  
+> run your stack locally, manage your databases, host your own email, deploy Docker stacks, manage Node.js apps, lock it all down with 24/7 security monitoring, sync real domains, and go live in a click.
 
 <br/>
 
@@ -38,9 +38,45 @@
 
 <br/>
 
-## 🆕 What's New in v1.4 — NODE-MNGR
+## 🆕 What's New in v1.5 — SEC-MNGR
 
-> **KillTheHost v1.4 introduces NODE-MNGR** — a full browser-based Node.js app manager that brings the same zero-friction deployment experience to React, Next.js, Vite, and Node.js projects.
+> **KillTheHost v1.5 introduces SEC-MNGR**, a security manager and threat dashboard for the whole stack. It watches every KillTheHost manager, bans attacking IPs automatically, and monitors the host around the clock.
+
+Once your sites, databases and mail server are public, they get probed, scanned and brute-forced. SEC-MNGR collects the logs from every KillTheHost service in one place, detects attack patterns the way Fail2Ban does, and blocks offending IPs or entire CIDR ranges at the firewall.
+
+### 🛡️ SEC-MNGR Highlights
+
+| Feature | Details |
+|---|---|
+| **Unified access log** | Access and auth logs from PHP-MNGR, DB-3NGIN3, MAIL-SRVR, STAX-MNGR, NODE-MNGR, the launcher and Docker, merged into one searchable log with CSV/JSON export |
+| **IP intelligence** | Per-IP history: request count, first/last seen, services hit, blocked attempts |
+| **IP & CIDR bans** | Exact IPs or IPv4/IPv6 CIDR ranges; temporary, permanent or soft-warn bans, with notes |
+| **Allowlist** | Trusted IPs and ranges override every ban rule |
+| **Fail2Ban-style detection** | Built-in rules (AUTH_FAIL, RATE_FLOOD, PATH_PROBE, MALFORMED, MAIL_FAIL, DB_FAIL, REPEAT_OFFENDER) run every 30s; thresholds can be edited in the UI |
+| **Escalating penalties** | A 2nd offense doubles the ban length; a 3rd offense makes it permanent |
+| **Firewall enforcement** | Uses UFW, then iptables/ip6tables (plus `DOCKER-USER`), then HTTP-level blocking as a fallback |
+| **24/7 monitoring** | Every 60s: service health, CPU/memory/disk, Docker, UFW status, and alerts for new listening ports |
+| **Security timeline** | INFO / WARN / HIGH / CRITICAL events, each saying exactly which rule fired |
+| **Local-only by default** | Binds to `127.0.0.1:8080`, has CSRF and DNS-rebinding protection, and keeps its data at `0700`/`0600` permissions |
+
+```
+  PHP-MNGR · DB-3NGIN3 · MAIL-SRVR · STAX-MNGR · NODE-MNGR · Launcher · Docker
+        │  logs
+        ▼
+  SEC-MNGR (127.0.0.1:8080)  ──►  detection rules  ──►  UFW / iptables / HTTP block
+        │
+        └──►  24/7 health + port monitoring  ──►  security timeline & alerts
+```
+
+> 👉 **[Full SEC-MNGR Reference ↓](#️-sec-mngr-reference)**
+
+<br/>
+
+---
+
+## 🟢 Introduced in v1.4 — NODE-MNGR
+
+> **KillTheHost v1.4 introduced NODE-MNGR** — a full browser-based Node.js app manager that brings the same zero-friction deployment experience to React, Next.js, Vite, and Node.js projects.
 
 No more juggling terminal windows, manually running `npm start`, or tracking which port your app is on. NODE-MNGR gives every Node.js project its own dashboard card with live status, controls, logs, and one-click public access via Cloudflare Tunnels.
 
@@ -87,13 +123,13 @@ KillTheHost is a bundle of six open-source, single-file Python tools unified by 
 
 | Tool | Version | Purpose |
 |---|---|---|
-| ⚡ **Launcher** | `v1.4` | Unified browser UI to start, stop, and monitor all tools — zero dependencies |
+| ⚡ **Launcher** | `v1.5` | Unified browser UI to start, stop, and monitor all tools — zero dependencies |
 | 🐘 **PHP-MNGR** | `v2.5` | Local & Public PHP project manager — spin up, manage, and publish PHP sites via Docker |
 | 🗄️ **DB-3NGIN3** | `v1.2` | Local database service manager — PostgreSQL, MySQL, MariaDB, Redis, MongoDB |
 | ✉️ **MAIL-SRVR** | `v1.0` | Self-hosted email server — send, receive, IMAP, DKIM, SPF, DMARC, and a full browser mail client |
 | 🐳 **STAX-MNGR** | `v1.0` | Docker stack manager — deploy and manage pre-configured application stacks with one click |
-| 🟢 **NODE-MNGR** | `v1.0` | Node.js app manager — deploy and manage React, Next.js, Vite, and Node.js projects *(New in v1.4)* |
-| 🛡️ **SEC-MNGR** | `v1.0` | Security manager — unified access logs, IP bans/allowlist, Fail2Ban-style detection, 24/7 host monitoring (port 8080) |
+| 🟢 **NODE-MNGR** | `v1.0` | Node.js app manager — deploy and manage React, Next.js, Vite, and Node.js projects |
+| 🛡️ **SEC-MNGR** | `v1.0` | Security manager — unified access logs, IP bans/allowlist, Fail2Ban-style detection, 24/7 host monitoring (port 8080) *(New in v1.5)* |
 
 Together, they connect to your **Namecheap** domains and route traffic through **Cloudflare Tunnels** — putting your localhost on the public internet without a single line of server config.
 
@@ -137,12 +173,12 @@ Spin up or shut down **PostgreSQL, MySQL, MariaDB, Redis, and MongoDB** Docker c
 ### ✉️ Self-Hosted Email Server
 Run a complete email server on your own VPS. MAIL-SRVR handles everything: SMTP delivery and inbound receiving, IMAP inbox access, DKIM signing, SPF and DMARC records, and an automated deliverability checklist. Includes a full browser-based email client with compose, rich text editing, file attachments, draft saving, folder navigation (Inbox, Sent, Drafts, Trash, Junk), and per-account HTML signatures.
 
-### 🟢 Node.js App Manager *(New in v1.4)*
+### 🟢 Node.js App Manager
 Deploy and manage React, Next.js, Vite, and Node.js projects from a browser-based dashboard. NODE-MNGR handles app deployment, start/stop/restart controls, per-app Node.js version switching via `nvm`, real-time log streaming, and automatic port assignment — all without touching the terminal. Supports both `npm` and `yarn`. Each app gets its own card with live status, port info, and direct controls. Expose any app to the public web via Cloudflare Tunnels with one click.
 
 > 👉 **[Jump to NODE-MNGR Reference ↓](#-node-mngr-reference)**
 
-### 🛡️ Security Manager — SEC-MNGR
+### 🛡️ Security Manager — SEC-MNGR *(New in v1.5)*
 A single-file, zero-dependency security dashboard on **http://127.0.0.1:8080**. SEC-MNGR collects access and auth logs from every KillTheHost manager into one searchable log. It tracks each IP's history and bans offenders (single IPs or IPv4/IPv6 CIDR ranges) with temporary, permanent or soft-warn bans. A Fail2Ban-style detection engine runs every 30 seconds, and a monitor checks services, CPU/memory/disk, Docker, UFW and listening ports every 60 seconds. Bans are enforced through UFW, then iptables, then HTTP-level blocking as a fallback.
 
 > 👉 **[Jump to SEC-MNGR Reference ↓](#️-sec-mngr-reference)**
@@ -215,9 +251,10 @@ KillTheHost/
             │   └── mailserver.py
             ├── STAX-MNGR v1.0/
             │   └── staxmngr.py
-            ├── NODE-MNGR v1.0/         ← New in v1.4
+            ├── NODE-MNGR v1.0/
             │   └── nodemngr.py
-            └── sec_mngr.py             ← SEC-MNGR security manager (port 8080)
+            └── SEC-MNGR v1.0/          ← New in v1.5
+                └── sec_mngr.py         ← Security manager (port 8080)
 ```
 
 <br/>
@@ -479,11 +516,11 @@ Deploy and manage pre-configured Docker application stacks with a single click. 
 
 ## 🛡️ SEC-MNGR Reference
 
-SEC-MNGR (`Launcher/assets/main/sec_mngr.py`) is the security layer for the whole KillTheHost stack. It is a single Python 3.8+ file that uses only the standard library, with the dashboard embedded in it. Start it from the launcher, or run it directly:
+SEC-MNGR (`Launcher/assets/main/SEC-MNGR v1.0/sec_mngr.py`) is the security layer for the whole KillTheHost stack. It is a single Python 3.8+ file that uses only the standard library, with the dashboard embedded in it. Start it from the launcher, or run it directly:
 
 ```bash
-python3 Launcher/assets/main/sec_mngr.py                 # http://127.0.0.1:8080
-python3 Launcher/assets/main/sec_mngr.py --host 127.0.0.1 --port 8080 --no-browser
+python3 "Launcher/assets/main/SEC-MNGR v1.0/sec_mngr.py"                 # http://127.0.0.1:8080
+python3 "Launcher/assets/main/SEC-MNGR v1.0/sec_mngr.py" --host 127.0.0.1 --port 8080 --no-browser
 # Environment overrides: SECMNGR_HOST, SECMNGR_PORT, SECMNGR_NO_BROWSER=1
 ```
 
@@ -622,8 +659,9 @@ systemctl --user enable --now killthehost
 - [x] Unified cross-platform launcher (v1.1)
 - [x] Self-hosted email server with full browser client (MAIL-SRVR v1.1)
 - [x] Docker stack manager with pre-configured application stacks (STAX-MNGR v1.0)
-- [x] Node.js app manager with nvm version switching and Cloudflare tunnel support (NODE-MNGR v1.1) ← **New in v1.4**
+- [x] Node.js app manager with nvm version switching and Cloudflare tunnel support (NODE-MNGR v1.1)
 - [x] Additional domain registrar support (GoDaddy, Porkbun, Cloudflare Registrar…)
+- [x] Security manager with unified access logging, IP/CIDR bans, Fail2Ban-style detection and 24/7 monitoring (SEC-MNGR v1.0) ← **New in v1.5**
 - [ ] Multi-domain email support in MAIL-SRVR
 - [ ] MAIL-SRVR relay/smarthost option for providers that block port 25
 - [ ] NODE-MNGR: GitHub auto-deploy / webhook triggers
@@ -645,7 +683,7 @@ systemctl --user enable --now killthehost
 
 <br/>
 
-### 🟢 NODE-MNGR — Node.js App Manager *(New in v1.4)*
+### 🟢 NODE-MNGR — Node.js App Manager
 
 [![NODE-MNGR](https://i.ibb.co/yF8jMP6M/NODE-MNGR.png)](https://ibb.co/VYv4h9gh)
 
