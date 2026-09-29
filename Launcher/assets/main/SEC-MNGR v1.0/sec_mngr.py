@@ -2167,16 +2167,16 @@ class SecurityCore:
         sev = Counter(e["severity"] for e in ev24)
         bans24 = [e for e in ev24 if e.get("category") in ("ban", "detection") and e["severity"] != "INFO"]
         svc = health.get("services") or {}
-        # Threat level based on active threats, not just historical events
-        active_critical = sev["CRITICAL"]
-        active_warn = sev["WARN"]
-        active_bans = len(hard)  # Only count active bans, not historical
-        
-        if active_critical >= 5 or score < 40:
+        # Threat level: driven by CRITICAL events + active bans + posture score only.
+        # WARN events (service state changes, port notices) are informational — they
+        # are already surfaced in the Alerts panel and must NOT inflate the threat level.
+        crit = sev["CRITICAL"]
+        active_bans = len(hard)
+        if crit >= 5 or score < 40:
             level = "CRITICAL"
-        elif active_critical > 0 or active_bans >= 10 or score < 60:
+        elif crit > 0 or active_bans >= 10 or score < 60:
             level = "HIGH"
-        elif (active_critical + active_warn > 0) or active_bans > 0 or score < 85:
+        elif active_bans > 0 or score < 85:
             level = "ELEVATED"
         else:
             level = "SECURE"
