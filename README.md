@@ -95,7 +95,7 @@ No more juggling terminal windows, manually running `npm start`, or tracking whi
 | **Cloudflare Tunnels** | Expose any Node.js app to the public web with one click — same as PHP-MNGR |
 
 ```
-  localhost:6262  ──►  NODE-MNGR UI
+  localhost:7272  ──►  NODE-MNGR UI
   localhost:3100  ──►  Your React / Next.js / Vite / Node app
   localhost:3101  ──►  Another app
         ↓
@@ -147,13 +147,14 @@ Together, they connect to your **Namecheap** domains and route traffic through *
   localhost:7734  ──►  DB-3NGIN3   ──►  PostgreSQL · MySQL · Redis · MongoDB
   localhost:6060  ──►  MAIL-SRVR   ──►  SMTP/IMAP  ──►  mail.yourdomain.com
   localhost:6161  ──►  STAX-MNGR   ──►  Docker Stacks  ──►  VaultWarden · Nextcloud · Gitea…
-  localhost:6262  ──►  NODE-MNGR   ──►  Node.js Apps  ──►  React · Next.js · Vite…
+  localhost:7272  ──►  NODE-MNGR   ──►  Node.js Apps  ──►  React · Next.js · Vite…
+  localhost:8080  ──►  SEC-MNGR    ──►  Access Logs · IP/CIDR Bans · Fail2Ban Rules  ──►  UFW / iptables
 ```
 
 <br/>
 
 ### ⚡ Unified Launcher
-A single browser-based control panel that starts and stops PHP-MNGR, DB-3NGIN3, MAIL-SRVR, STAX-MNGR, and NODE-MNGR with one click. Real-time console output, live status indicators, uptime timers, and port monitoring — all in one place. Zero external dependencies, pure Python standard library.
+A single browser-based control panel that starts and stops PHP-MNGR, DB-3NGIN3, MAIL-SRVR, STAX-MNGR, NODE-MNGR, and SEC-MNGR with one click. Real-time console output, live status indicators, uptime timers, and port monitoring — all in one place. Launcher events are also written to `~/.killthehost/launcher.log`, so SEC-MNGR can audit them. Zero external dependencies, pure Python standard library.
 
 ### 🌐 Domain Sync
 Connect your **Namecheap** account and assign real domains to local projects — no manual DNS editing required. More registrar integrations are on the roadmap.
@@ -268,7 +269,7 @@ KillTheHost/
 Once `launch.sh` / `launch.bat` is run, a control panel opens in your browser at `http://localhost:5000`.
 
 From there you can:
-- **Start / Stop** PHP-MNGR, DB-3NGIN3, MAIL-SRVR, and STAX-MNGR individually or together
+- **Start / Stop** PHP-MNGR, DB-3NGIN3, MAIL-SRVR, STAX-MNGR, NODE-MNGR, and SEC-MNGR individually or together
 - **Open** each panel directly in a new browser tab
 - **Monitor** live status, uptime, and real-time console output for all services
 - **Filter** console output by service
@@ -310,7 +311,7 @@ To stop the launcher itself, press `Ctrl+C` in the terminal. It will gracefully 
 
 ### Deploying a Node.js App with NODE-MNGR
 
-1. Open NODE-MNGR at **http://localhost:6262**
+1. Open NODE-MNGR at **http://localhost:7272**
 2. Click **+ Deploy App** in the top-right corner
 3. Point it at your local project folder (or paste a GitHub repo URL)
 4. Select your package manager (`npm` or `yarn`) and Node.js version
@@ -319,6 +320,18 @@ To stop the launcher itself, press `Ctrl+C` in the terminal. It will gracefully 
 7. To go public, click the **Cloudflare Tunnel** button on the app card and assign a domain
 
 > **Tip:** Use the **Node** button on each app card to switch Node.js versions per project without affecting other apps.
+
+### Securing Your Stack with SEC-MNGR
+
+1. Start **SEC-MNGR** from the launcher (or click **Start All**), then open **http://127.0.0.1:8080**
+2. Check **Overview**: threat level, security posture score, service health and posture findings (for example, panels exposed on `0.0.0.0`)
+3. In **IP Manager**, add your own IP or office range to the **Allowlist** first so you never lock yourself out
+4. Review the thresholds in **Detection Rules**. Automatic bans start as soon as a rule fires; set **Settings → detection mode** to `monitor` to only log while you tune them
+5. Ban an IP or CIDR range by hand from **IP Manager → Ban an IP / CIDR**
+6. For real firewall bans, run the launcher with root or passwordless `sudo` and have UFW or iptables installed. Without them, SEC-MNGR blocks banned IPs itself at the HTTP level and lists the exact firewall commands to run
+7. Use **Access Logs** to search traffic across every service and export it to CSV/JSON
+
+> **Tip:** SEC-MNGR has no login. Keep it bound to `127.0.0.1` and reach it remotely through an SSH tunnel: `ssh -L 8080:127.0.0.1:8080 user@your-vps`.
 
 <br/>
 
@@ -452,7 +465,7 @@ Deleting an instance removes the Docker container but **preserves data files on 
 
 | Service | Port |
 |---|---|
-| NODE-MNGR UI | 6262 |
+| NODE-MNGR UI | 7272 |
 | Apps (auto-assigned) | 3100, 3101, 3102… |
 
 ### Node.js Version Switching
@@ -677,9 +690,25 @@ systemctl --user enable --now killthehost
 
 ### ⚡ KillTheHost Launcher — Main Control Panel
 
-[![LAUNCHER](https://i.ibb.co/0j02ctSj/LAUNCHER.png)](https://ibb.co/6RKwmBxR)
+[![LAUNCHER](.github/assets/screenshots/LAUNCHER-v1.5.png)](.github/assets/screenshots/LAUNCHER-v1.5.png)
 
-*Dedicated control panel for managing all KillTheHost services, including status, uptime, and runtime controls*
+*Dedicated control panel for managing all six KillTheHost services, now including SEC-MNGR — status, uptime, runtime controls, and a filterable console*
+
+<br/>
+
+### 🛡️ SEC-MNGR — Security Overview *(New in v1.5)*
+
+[![SEC-MNGR Overview](.github/assets/screenshots/SEC-MNGR-overview.png)](.github/assets/screenshots/SEC-MNGR-overview.png)
+
+*Threat level, security posture score, active bans, 24h alerts, live health of every KillTheHost service, posture findings, and a recent-alerts timeline*
+
+<br/>
+
+### 🛡️ SEC-MNGR — IP Manager & Auto-Bans *(New in v1.5)*
+
+[![SEC-MNGR IP Manager](.github/assets/screenshots/SEC-MNGR-ip-manager.png)](.github/assets/screenshots/SEC-MNGR-ip-manager.png)
+
+*Ban single IPs or CIDR ranges, manage the allowlist, and review automatic bans from AUTH_FAIL, RATE_FLOOD, PATH_PROBE, MAIL_FAIL, and DB_FAIL rules — with CSV/JSON/blocklist export*
 
 <br/>
 
