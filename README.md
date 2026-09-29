@@ -287,8 +287,8 @@ If the launcher is running in the background (or in another terminal), use the h
 | Linux / macOS | `./stop.sh` | `./restart.sh` |
 | Windows | `stop.bat` | `restart.bat` |
 
-- **stop** finds the launcher via its PID file (`~/.killthehost/launcher.pid`) or whatever is listening on port `5000`, sends a graceful stop (SIGTERM, so managed services shut down cleanly) and force-kills it after 3 seconds if needed.
-- **restart** runs the stop script, waits 2 seconds, then starts the launcher again via `launch.sh` / `launch.bat`.
+- **stop** finds the launcher via its PID file (`~/.killthehost/launcher.pid`) or whatever is listening on port `5000`, sends a graceful stop (SIGTERM, so managed services shut down cleanly) and force-kills it after 3 seconds if needed. It then frees **every suite service port** (PHP-MNGR 4280, DB-3NGIN3 7734, MAIL-SRVR 6060, STAX-MNGR 6161, NODE-MNGR 7272, SEC-MNGR 8080), stopping any process still listening, including leftovers from earlier runs that were never stopped. Ports are read from `SERVICES` in `Launcher/launcher.py`, so services added later are covered automatically. Docker containers are not touched.
+- **restart** runs the stop script (retrying once if a port is still busy), makes sure every suite port is free, then starts the launcher again via `launch.sh` / `launch.bat`. If a port is held by another user's process, it tells you to run `sudo ./stop.sh`.
 
 First time on Linux / macOS: `chmod +x stop.sh restart.sh`
 
