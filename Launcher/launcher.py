@@ -281,7 +281,7 @@ class ServiceProcess:
         try:
             for line in self._proc.stdout:
                 s = line.rstrip()
-                if s:
+                if s and not is_browser_noise(s):
                     self._log_entry(s, "output")
         except Exception:
             pass
@@ -1081,11 +1081,6 @@ def preflight() -> list:
 # ────
 
 LAUNCHER_PID_FILE = LAUNCHER_LOG_DIR / "launcher.pid"
-GTK_MARKER        = LAUNCHER_LOG_DIR / "gtk-modules.checked"   # delete to re-run the check
-GTK_PACKAGES = [
-    "libcanberra-gtk-module", "libcanberra-gtk3-module",   # canberra-gtk-module
-    "packagekit-gtk3-module", "gir1.2-packagekitglib-2.0",  # pk-gtk-module
-]
 
 
 def _write_pid_file():
@@ -1104,79 +1099,177 @@ def _remove_pid_file():
         pass
 
 
-def ensure_gtk_modules():
-    """Fallback for direct `python3 launcher.py` runs: install missing Gtk modules
-    on Debian/Ubuntu so browser windows don't log canberra/pk-gtk warnings.
-    Packages the distro doesn't ship are skipped. Never blocks startup."""
-    if SYSTEM != "Linux" or os.environ.get("KTH_GTK_CHECKED") == "1" or GTK_MARKER.exists():
-        return
-    if not shutil.which("dpkg") or not shutil.which("apt-get"):
-        return
+GTK_NOISY_MODULES = {"canberra-gtk-module", "pk-gtk-module"}
+BROWSER_NOISE = (
+    'Failed to load module "canberra-gtk-module"',
+    'Failed to load module "pk-gtk-module"',
+    "is the Flatpak D-Bus portal working?",
+    'Failed to execute child process "dbus-launch"',
+    "Failed to execute child process \u201cdbus-launch\u201d",
+)
 
-    def _mark_done():
+
+def prepare_gui_env():
+    """Linux: make browsers opened by the launcher and every manager start cleanly.
+    Changes os.environ, so all child services inherit it.
+    - Drops canberra/pk-gtk from GTK_MODULES. Sandboxed (Flatpak/Snap) browsers
+      can never load host Gtk modules, so installing packages alone can't silence them.
+    - Points DBUS_SESSION_BUS_ADDRESS at the user's session bus when it's unset,
+      so the Flatpak portal doesn't fall back to the missing `dbus-launch`."""
+    if SYSTEM != "Linux":
+        return
+    mods = os.environ.get("GTK_MODULES")
+    if mods is not None:
+        kept = [m for m in mods.split(":") if m and m not in GTK_NOISY_MODULES]
+        if kept:
+            os.environ["GTK_MODULES"] = ":".join(kept)
+        else:
+            os.environ.pop("GTK_MODULES", None)
+    if not os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
+        bus = Path(f"/run/user/{os.getuid()}/bus")
+        if bus.exists():
+            os.environ["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus}"
+    if not os.environ.get("XDG_RUNTIME_DIR"):
+        rt = Path(f"/run/user/{os.getuid()}")
+        if rt.is_dir():
+            os.environ["XDG_RUNTIME_DIR"] = str(rt)
+
+
+def is_browser_noise(line: str) -> bool:
+    return any(n in line for n in BROWSER_NOISE)
+
+
+def open_browser_quiet(url: str):
+    """Open url in the default browser without leaking Gtk/portal chatter to the console."""
+    if SYSTEM == "Linux" and shutil.which("xdg-open"):
         try:
-            LAUNCHER_LOG_DIR.mkdir(parents=True, exist_ok=True)
-            GTK_MARKER.touch()
+            subprocess.Popen(["xdg-open", url], stdin=subprocess.DEVNULL,
+                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
+                             start_new_session=True)
+            return
         except OSError:
             pass
+    webbrowser.open(url)
 
-    def _run(cmd, timeout=300):
-        try:
-            return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
-        except (OSError, subprocess.SubprocessError):
-            return None
 
-    missing = []
-    for pkg in GTK_PACKAGES:
-        r = _run(["dpkg", "-s", pkg], timeout=5)
-        if r is None:
-            return
-        if "Status: install ok installed" not in r.stdout:
-            missing.append(pkg)
+GTK_UNAVAILABLE = LAUNCHER_LOG_DIR / "gtk-modules.unavailable"   # pkgs the distro doesn't ship
+
+# Package names per package manager. Each entry: (package, what it provides)
+GTK_PACKAGES = {
+    "apt-get": ["libcanberra-gtk-module", "libcanberra-gtk3-module",
+                "packagekit-gtk3-module", "dbus-x11"],
+    "dnf":     ["libcanberra-gtk3", "libcanberra-gtk2", "PackageKit-gtk3-module", "dbus-x11"],
+    "yum":     ["libcanberra-gtk3", "libcanberra-gtk2", "PackageKit-gtk3-module", "dbus-x11"],
+    "zypper":  ["libcanberra-gtk3-module", "libcanberra-gtk2-module",
+                "PackageKit-gtk3-module", "dbus-1-x11"],
+    "pacman":  ["libcanberra", "dbus"],
+}
+_PKG_QUERY = {
+    "apt-get": lambda p: ["dpkg-query", "-W", "-f=${Status}", p],
+    "dnf":     lambda p: ["rpm", "-q", p],
+    "yum":     lambda p: ["rpm", "-q", p],
+    "zypper":  lambda p: ["rpm", "-q", p],
+    "pacman":  lambda p: ["pacman", "-Q", p],
+}
+_PKG_INSTALL = {
+    "apt-get": ["apt-get", "install", "-y"],
+    "dnf":     ["dnf", "install", "-y"],
+    "yum":     ["yum", "install", "-y"],
+    "zypper":  ["zypper", "--non-interactive", "install"],
+    "pacman":  ["pacman", "-S", "--needed", "--noconfirm"],
+}
+
+
+def _pkg_manager():
+    for pm in ("apt-get", "dnf", "yum", "zypper", "pacman"):
+        if shutil.which(pm):
+            return pm
+    return None
+
+
+def _pkg_installed(pm, pkg):
+    try:
+        r = subprocess.run(_PKG_QUERY[pm](pkg), capture_output=True, text=True, timeout=10)
+    except (OSError, subprocess.SubprocessError):
+        return False
+    if pm == "apt-get":
+        return r.returncode == 0 and "install ok installed" in r.stdout
+    return r.returncode == 0
+
+
+def _root_prefix():
+    """How to get root: direct, sudo (terminal password prompt), or pkexec (GUI prompt)."""
+    if os.geteuid() == 0:
+        return []
+    if shutil.which("sudo"):
+        # Already authorised (cached / NOPASSWD)?
+        if subprocess.run(["sudo", "-n", "true"], capture_output=True).returncode == 0:
+            return ["sudo"]
+        if sys.stdin and sys.stdin.isatty():
+            return ["sudo"]                      # will prompt in this terminal
+    if shutil.which("pkexec") and (os.environ.get("DISPLAY") or os.environ.get("WAYLAND_DISPLAY")):
+        return ["pkexec"]                        # graphical password dialog
+    return None
+
+
+def ensure_gtk_modules():
+    """Linux: install the Gtk modules (canberra-gtk-module, pk-gtk-module) and
+    dbus-launch that browsers opened by the launcher ask for. Supports apt, dnf,
+    yum, zypper and pacman. Checks every start (fast package query) and installs
+    only what's missing. Never blocks startup if it can't install."""
+    if SYSTEM != "Linux" or os.environ.get("KTH_SKIP_GTK_INSTALL") == "1":
+        return
+    pm = _pkg_manager()
+    if not pm:
+        print("  [GTK] No supported package manager found (apt/dnf/yum/zypper/pacman) — skipping.\n")
+        return
+
+    try:
+        unavailable = set(GTK_UNAVAILABLE.read_text().split()) if GTK_UNAVAILABLE.exists() else set()
+    except OSError:
+        unavailable = set()
+    missing = [p for p in GTK_PACKAGES[pm] if p not in unavailable and not _pkg_installed(pm, p)]
     if not missing:
         return
 
-    print("  [SEC-MNGR] Installing required Gtk modules...")
-    prefix = []
-    if os.geteuid() != 0:
-        if not shutil.which("sudo"):
-            print(f"  [NOTICE] Fix manually: apt-get install -y {' '.join(missing)}\n")
-            return
-        prefix = ["sudo", "-n"]   # -n: never prompt for a password
-
-    def _available():
-        out = []
-        for pkg in missing:
-            r = _run(["apt-cache", "policy", pkg], timeout=15)
-            cand = ""
-            if r:
-                for line in r.stdout.splitlines():
-                    if "Candidate:" in line:
-                        cand = line.split(":", 1)[1].strip()
-            if cand and cand != "(none)":
-                out.append(pkg)
-        return out
-
-    avail = _available()
-    if not avail:
-        _run([*prefix, "apt-get", "update"])
-        avail = _available()
-    if not avail:
-        print("  [NOTICE] Gtk module packages not available on this distro — skipping.\n")
-        _mark_done()
+    print(f"  [GTK] Installing required Gtk modules via {pm}: {' '.join(missing)}")
+    prefix = _root_prefix()
+    if prefix is None:
+        print("  [GTK] Can't get root without a terminal or graphical password prompt.")
+        print(f"  [GTK] Run once manually:  sudo {' '.join(_PKG_INSTALL[pm])} {' '.join(missing)}\n")
         return
+    if prefix == ["sudo"] and sys.stdin and sys.stdin.isatty():
+        print("  [GTK] You may be asked for your sudo password.")
 
-    install = [*prefix, "apt-get", "install", "-y", *avail]
-    for refresh_first in (False, True):   # retry once with refreshed package lists
-        if refresh_first:
-            _run([*prefix, "apt-get", "update"])
-        r = _run(install)
-        if r is not None and r.returncode == 0:
-            print(f"  [SEC-MNGR] Gtk modules installed: {' '.join(avail)}\n")
-            _mark_done()
-            return
-    print("  [NOTICE] Gtk module install skipped/failed — continuing anyway.")
-    print(f"  Fix manually: sudo apt-get install -y {' '.join(avail)}\n")
+    def _install(pkgs):
+        try:
+            return subprocess.run([*prefix, *_PKG_INSTALL[pm], *pkgs], timeout=900).returncode == 0
+        except (OSError, subprocess.SubprocessError) as exc:
+            print(f"  [GTK] Install error: {exc}")
+            return False
+
+    if pm == "apt-get":
+        subprocess.run([*prefix, "apt-get", "update", "-qq"], timeout=600)
+    elif pm == "pacman":
+        pass  # avoid partial upgrades (-Sy); install from current sync db
+    if not _install(missing):
+        # Bulk install failed (usually one package the distro doesn't ship) — go one by one
+        for pkg in missing:
+            if not _install([pkg]) and not _pkg_installed(pm, pkg):
+                unavailable.add(pkg)
+
+    still = [p for p in missing if not _pkg_installed(pm, p)]
+    installed = [p for p in missing if p not in still]
+    if installed:
+        print(f"  [GTK] Installed: {' '.join(installed)}")
+    if still:
+        print(f"  [GTK] Not available on this distro (won't retry): {' '.join(still)}")
+        try:
+            LAUNCHER_LOG_DIR.mkdir(parents=True, exist_ok=True)
+            GTK_UNAVAILABLE.write_text(" ".join(sorted(unavailable | set(still))))
+        except OSError:
+            pass
+    print()
 
 
 # ────
@@ -1194,6 +1287,7 @@ def main():
 """)
 
     ensure_gtk_modules()
+    prepare_gui_env()
 
     issues = preflight()
     if issues:
@@ -1237,7 +1331,7 @@ def main():
 
     def _open_browser():
         time.sleep(0.9)
-        webbrowser.open(url)
+        open_browser_quiet(url)
 
     threading.Thread(target=_open_browser, daemon=True).start()
 
