@@ -2586,9 +2586,9 @@ class Handler(BaseHTTPRequestHandler):
 # ─────────────────────────────────────────────────────────────────────────────
 
 FAVICON = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
-           '<path d="M32 4 8 13v17c0 15 10 26 24 30 14-4 24-15 24-30V13z" fill="#dc2626"/>'
-           '<path d="M32 12 16 18v12c0 10 7 18 16 21 9-3 16-11 16-21V18z" fill="#0b0b0d"/>'
-           '<path d="M26 31h12v12H26zM28 31v-4a4 4 0 0 1 8 0v4" fill="none" stroke="#ef4444" stroke-width="3"/>'
+           '<rect width="64" height="64" rx="14" fill="#e879a8"/>'
+           '<path d="M32 13 17 20v11c0 10 6 17 15 20 9-3 15-10 15-20V20z" fill="white" opacity="0.9"/>'
+           '<path d="M26 33h12v9H26zM28 33v-4a4 4 0 0 1 8 0v4" fill="none" stroke="#e879a8" stroke-width="2.5"/>'
            '</svg>')
 
 HTML = r"""<!DOCTYPE html>
@@ -2597,77 +2597,130 @@ HTML = r"""<!DOCTYPE html>
 <title>SEC-MNGR · Security Manager</title>
 <link rel="icon" href="/favicon.ico" type="image/svg+xml">
 <style>
-:root{--bg:#0b0b0d;--panel:#141416;--panel2:#1b1b1f;--line:#2a1a1c;--txt:#e7e5e4;--dim:#8b8589;
---accent:#dc2626;--accent2:#7f1d1d;--crit:#ef4444;--warn:#f59e0b;--ok:#10b981;--info:#60a5fa;
---mono:Menlo,Consolas,"DejaVu Sans Mono",monospace}
-*{box-sizing:border-box}html,body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.45 var(--mono)}
-body{background-image:radial-gradient(circle at 20% -10%,#3b0a0a55,transparent 45%)}
-a{color:var(--crit)}
-header{display:flex;align-items:center;gap:14px;padding:12px 20px;border-bottom:1px solid var(--line);
-background:linear-gradient(90deg,#1a0707,#0b0b0d);position:sticky;top:0;z-index:5}
-.logo{font-weight:700;font-size:18px;letter-spacing:2px;color:#fff}.logo span{color:var(--accent)}
-.sub{color:var(--dim);font-size:11px}.grow{flex:1}
+:root{
+  --bg:#0d0d0f;--sidebar:#111114;--panel:#17171b;--panel2:#1d1d22;
+  --border:#26262f;--txt:#e8e8ed;--dim:#64647a;--accent:#10b981;
+  --green-btn:#059669;--pink:#e879a8;--red:#ef4444;--crit:#ef4444;
+  --warn:#f59e0b;--ok:#10b981;--info:#60a5fa;
+  --mono:Menlo,Consolas,"DejaVu Sans Mono",monospace;
+  --sans:-apple-system,BlinkMacSystemFont,"Segoe UI",Roboto,sans-serif;
+}
+*{box-sizing:border-box}
+html,body{margin:0;background:var(--bg);color:var(--txt);font:13px/1.5 var(--sans);height:100%}
+a{color:var(--accent)}
+.shell{display:flex;height:100vh;overflow:hidden}
+.sidebar{width:185px;flex-shrink:0;background:var(--sidebar);border-right:1px solid var(--border);display:flex;flex-direction:column;overflow:hidden}
+.sb-brand{padding:14px 12px 12px;border-bottom:1px solid var(--border);display:flex;gap:10px;align-items:flex-start}
+.sb-icon{width:36px;height:36px;flex-shrink:0;background:var(--pink);border-radius:8px;display:flex;align-items:center;justify-content:center;font-size:18px}
+.sb-title{font-size:14px;font-weight:700;color:var(--txt);letter-spacing:-.3px}
+.sb-the{color:var(--pink)}
+.sb-tool{font-size:10px;font-weight:600;color:var(--txt);letter-spacing:.5px;margin-top:1px;text-transform:uppercase}
+.sb-sub{font-size:9px;color:var(--dim);text-transform:uppercase;letter-spacing:.3px;line-height:1.3;margin-top:2px}
+.sb-nav{flex:1;overflow-y:auto;padding:6px 0}
+.sb-nav button{display:flex;align-items:center;gap:8px;width:100%;background:none;border:none;border-left:3px solid transparent;color:var(--dim);padding:9px 14px;font:13px var(--sans);cursor:pointer;text-align:left;transition:color .15s,background .15s}
+.sb-nav button:hover{color:var(--txt);background:rgba(255,255,255,.03)}
+.sb-nav button.on{color:var(--txt);background:rgba(16,185,129,.08);border-left-color:var(--accent)}
+.sb-footer{padding:10px;border-top:1px solid var(--border)}
+.sb-refresh{width:100%;background:transparent;border:1px solid var(--border);color:var(--dim);border-radius:6px;padding:7px;font:13px var(--sans);cursor:pointer;margin-bottom:8px}
+.sb-refresh:hover{color:var(--txt);border-color:#444}
+.sb-ver{font-size:10px;color:var(--dim);text-align:center;line-height:1.5}
+.content{flex:1;display:flex;flex-direction:column;overflow:hidden}
+.topbar{height:52px;padding:0 20px;border-bottom:1px solid var(--border);display:flex;align-items:center;gap:10px;flex-shrink:0}
+.tp-title{font-size:15px;font-weight:600;color:var(--txt)}
+.tp-addr{font-size:11px;color:var(--dim);background:var(--panel);border:1px solid var(--border);border-radius:4px;padding:2px 8px;font-family:var(--mono)}
+.grow{flex:1}
+.sub{color:var(--dim);font-size:11px}
+.live-dot{font-size:12px;color:var(--accent)}
 .pill{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
-.lv-LOW{color:var(--ok);border-color:var(--ok)}.lv-ELEVATED{color:var(--warn);border-color:var(--warn)}
-.lv-HIGH{color:#fb923c;border-color:#fb923c}.lv-CRITICAL{color:#fff;background:var(--crit);border-color:var(--crit);animation:pulse 1.4s infinite}
+.lv-LOW{color:var(--ok);border-color:var(--ok)}
+.lv-ELEVATED{color:var(--warn);border-color:var(--warn)}
+.lv-HIGH{color:#fb923c;border-color:#fb923c}
+.lv-CRITICAL{color:#fff;background:var(--crit);border-color:var(--crit);animation:pulse 1.4s infinite}
 @keyframes pulse{50%{box-shadow:0 0 14px var(--crit)}}
-nav{display:flex;gap:2px;padding:0 20px;border-bottom:1px solid var(--line);background:#0e0e10;overflow-x:auto}
-nav button{background:none;border:0;border-bottom:2px solid transparent;color:var(--dim);padding:10px 14px;
-font:inherit;cursor:pointer;white-space:nowrap}nav button.on{color:#fff;border-color:var(--accent)}
-nav button:hover{color:#fff}
-main{padding:18px 20px;max-width:1500px;margin:0 auto}
+main{flex:1;overflow-y:auto;padding:18px 20px}
 .tab{display:none}.tab.on{display:block}
 .grid{display:grid;gap:12px}.g4{grid-template-columns:repeat(auto-fit,minmax(200px,1fr))}
-.g2{grid-template-columns:repeat(auto-fit,minmax(420px,1fr))}
-.card{background:var(--panel);border:1px solid var(--line);border-radius:8px;padding:14px}
-.card h3{margin:0 0 10px;font-size:12px;letter-spacing:1px;text-transform:uppercase;color:var(--dim)}
-.big{font-size:28px;font-weight:700;color:#fff}.big small{font-size:12px;color:var(--dim);font-weight:400}
-table{width:100%;border-collapse:collapse}th,td{text-align:left;padding:6px 8px;border-bottom:1px solid #221416;vertical-align:top}
-th{color:var(--dim);font-weight:400;font-size:11px;text-transform:uppercase;position:sticky;top:0;background:var(--panel)}
-tr:hover td{background:#1a1012}
+.g2{grid-template-columns:repeat(auto-fit,minmax(380px,1fr))}
+.card{background:var(--panel);border:1px solid var(--border);border-radius:8px;padding:14px}
+.card h3{margin:0 0 10px;font-size:11px;letter-spacing:.8px;text-transform:uppercase;color:var(--dim);font-weight:500}
+.big{font-size:28px;font-weight:700;color:var(--accent)}
+.big small{font-size:12px;color:var(--dim);font-weight:400}
+table{width:100%;border-collapse:collapse}
+th,td{text-align:left;padding:6px 8px;border-bottom:1px solid var(--border);vertical-align:top}
+th{color:var(--dim);font-weight:500;font-size:11px;text-transform:uppercase;position:sticky;top:0;background:var(--panel)}
+tr:hover td{background:rgba(255,255,255,.02)}
 .scroll{max-height:520px;overflow:auto}
 .trunc{max-width:340px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
-input,select,textarea{background:#0e0e10;border:1px solid #3a2226;color:var(--txt);border-radius:5px;padding:6px 8px;font:inherit}
-input:focus,select:focus{outline:1px solid var(--accent)}
-.btn{background:var(--accent2);color:#fff;border:1px solid var(--accent);border-radius:5px;padding:6px 12px;cursor:pointer;font:inherit}
-.btn:hover{background:var(--accent)}.btn.ghost{background:transparent;border-color:#3a2226;color:var(--txt)}
-.btn.ghost:hover{border-color:var(--accent)}.btn.sm{padding:2px 8px;font-size:11px}
+input,select,textarea{background:var(--panel2);border:1px solid var(--border);color:var(--txt);border-radius:5px;padding:6px 8px;font:13px var(--sans)}
+input:focus,select:focus{outline:1px solid var(--accent);border-color:var(--accent)}
+.btn{background:var(--green-btn);color:#fff;border:none;border-radius:6px;padding:6px 12px;cursor:pointer;font:13px var(--sans)}
+.btn:hover{background:var(--accent)}
+.btn.ghost{background:transparent;border:1px solid var(--border);color:var(--dim)}
+.btn.ghost:hover{color:var(--txt);border-color:#555}
+.btn.sm{padding:2px 8px;font-size:11px}
+.btn.danger{background:#7f1d1d;border:1px solid var(--red);color:#fff}
+.btn.danger:hover{background:var(--red)}
 .row{display:flex;gap:8px;flex-wrap:wrap;align-items:center;margin-bottom:10px}
 .sev{font-size:10px;font-weight:700;padding:1px 6px;border-radius:3px}
-.s-INFO{color:var(--info);border:1px solid #1e3a5f}.s-WARN{color:var(--warn);border:1px solid #5c3d0a}
+.s-INFO{color:var(--info);border:1px solid #1e3a5f}
+.s-WARN{color:var(--warn);border:1px solid #5c3d0a}
 .s-CRITICAL{color:#fff;background:var(--crit)}
 .st-UP{color:var(--ok)}.st-DOWN{color:var(--dim)}.st-WARN{color:var(--warn)}
-.svc{border-left:3px solid var(--dim)}.svc.UP{border-left-color:var(--ok)}.svc.WARN{border-left-color:var(--warn)}
-.svc.DOWN{border-left-color:#444}
-.bar{height:8px;background:#221416;border-radius:4px;overflow:hidden;margin:6px 0}.bar i{display:block;height:100%;background:var(--ok)}
-.chart{display:flex;align-items:flex-end;gap:2px;height:110px}.chart div{flex:1;background:#3a1a1e;position:relative;min-height:1px}
+.svc{border-left:3px solid var(--dim);padding-left:8px;margin:4px 0}
+.svc.UP{border-left-color:var(--ok)}.svc.WARN{border-left-color:var(--warn)}.svc.DOWN{border-left-color:#333}
+.bar{height:8px;background:var(--panel2);border-radius:4px;overflow:hidden;margin:6px 0}
+.bar i{display:block;height:100%;background:var(--accent)}
+.chart{display:flex;align-items:flex-end;gap:2px;height:110px}
+.chart div{flex:1;background:var(--panel2);position:relative;min-height:1px}
 .chart div b{position:absolute;bottom:0;left:0;right:0;background:var(--accent)}
-.tl{border-left:2px solid #3a2226;margin-left:6px;padding-left:14px}
-.tl .ev{position:relative;padding:6px 0 10px}.tl .ev:before{content:"";position:absolute;left:-20px;top:10px;width:10px;height:10px;border-radius:50%;background:var(--info)}
-.tl .ev.WARN:before{background:var(--warn)}.tl .ev.CRITICAL:before{background:var(--crit);box-shadow:0 0 8px var(--crit)}
+.chart div b.bad{background:var(--red)}
+.tl{border-left:2px solid var(--border);margin-left:6px;padding-left:14px}
+.tl .ev{position:relative;padding:6px 0 10px}
+.tl .ev:before{content:"";position:absolute;left:-20px;top:10px;width:10px;height:10px;border-radius:50%;background:var(--info)}
+.tl .ev.WARN:before{background:var(--warn)}
+.tl .ev.CRITICAL:before{background:var(--crit);box-shadow:0 0 8px var(--crit)}
 .muted{color:var(--dim)}.ok{color:var(--ok)}.bad{color:var(--crit)}.wrn{color:var(--warn)}
-code,.code{background:#0e0e10;border:1px solid #2a1a1c;padding:1px 5px;border-radius:3px;font-size:12px}
-pre{background:#0e0e10;border:1px solid #2a1a1c;padding:8px;border-radius:5px;overflow:auto;max-height:260px;white-space:pre-wrap}
+code,.code{background:var(--panel2);border:1px solid var(--border);padding:1px 5px;border-radius:3px;font-size:12px;font-family:var(--mono)}
+pre{background:var(--panel2);border:1px solid var(--border);padding:8px;border-radius:5px;overflow:auto;max-height:260px;white-space:pre-wrap;font-family:var(--mono)}
 #toast{position:fixed;right:20px;bottom:20px;padding:10px 16px;border-radius:6px;background:var(--panel2);border:1px solid var(--accent);display:none;z-index:50;max-width:480px}
 .modal{position:fixed;inset:0;background:#000b;display:none;align-items:center;justify-content:center;z-index:40}
 .modal.on{display:flex}.modal .card{width:min(1000px,94vw);max-height:88vh;overflow:auto}
 label.f{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--dim)}
 .kv td:first-child{color:var(--dim);width:220px}
 </style></head><body>
-<header>
-  <div class="logo">&#x1F6E1; SEC<span>-</span>MNGR</div>
-  <div class="sub">Security Manager &amp; Threat Dashboard · v%%VERSION%% · %%SYSTEM%%</div>
-  <div class="grow"></div>
-  <span id="lvl" class="pill lv-LOW">THREAT: …</span>
-  <span class="sub" id="upd">—</span>
-  <button class="btn ghost sm" onclick="refresh()">&#x21bb; Refresh</button>
-</header>
-<nav id="nav">
-  <button data-t="overview" class="on">Overview</button><button data-t="logs">Access Logs</button>
-  <button data-t="ips">IP Manager</button><button data-t="rules">Detection Rules</button>
-  <button data-t="mon">Monitoring</button><button data-t="health">System Health</button>
-  <button data-t="settings">Settings</button>
-</nav>
+<div class="shell">
+<aside class="sidebar">
+  <div class="sb-brand">
+    <div class="sb-icon">&#x1F6E1;</div>
+    <div>
+      <div class="sb-title">Kill<span class="sb-the">The</span>Host</div>
+      <div class="sb-tool">SEC-MNGR</div>
+      <div class="sb-sub">KILLTHEHOST SUITE<br>&middot; SECURITY MANAGER</div>
+    </div>
+  </div>
+  <nav class="sb-nav" id="nav">
+    <button data-t="overview" class="on">&#x2316; Overview</button>
+    <button data-t="logs">&#x1F4CB; Access Logs</button>
+    <button data-t="ips">&#x1F310; IP Manager</button>
+    <button data-t="rules">&#x26A1; Detection Rules</button>
+    <button data-t="mon">&#x1F4CA; Monitoring</button>
+    <button data-t="health">&#x2665; System Health</button>
+    <button data-t="settings">&#x2699; Settings</button>
+  </nav>
+  <div class="sb-footer">
+    <button class="sb-refresh" onclick="refresh()">&#x21bb; Refresh</button>
+    <div class="sb-ver">SEC-MNGR v%%VERSION%%<br>KillTheHost</div>
+  </div>
+</aside>
+<div class="content">
+  <div class="topbar">
+    <span class="tp-title" id="tp-title">Overview</span>
+    <span class="tp-addr" id="tp-addr">127.0.0.1:8080</span>
+    <div class="grow"></div>
+    <span id="lvl" class="pill lv-LOW">THREAT: ...</span>
+    <span class="live-dot">&#x25CF; Live</span>
+    <span class="muted" id="upd" style="font-size:11px">&#x2014;</span>
+  </div>
 <main>
 <!-- OVERVIEW -->
 <section class="tab on" id="t-overview">
@@ -2811,6 +2864,8 @@ Mutating calls need headers: X-SecMngr-Request: 1 and Content-Type: application/
   </div>
 </section>
 </main>
+</div>
+</div>
 
 <div class="modal" id="modal" onclick="if(event.target===this)closeModal()"><div class="card" id="modal-body"></div></div>
 <div id="toast"></div>
@@ -2837,10 +2892,13 @@ function toast(msg,bad){const t=$("toast");t.textContent=msg;t.style.borderColor
 function dl(url){const a=document.createElement("a");a.href=url;a.download="";document.body.appendChild(a);a.click();a.remove()}
 function svcLabel(k){return (SERVICES[k]&&SERVICES[k].label)||k}
 
+const TITLES={overview:"Overview",logs:"Access Logs",ips:"IP Manager",rules:"Detection Rules",mon:"Monitoring",health:"System Health",settings:"Settings"};
 document.querySelectorAll("#nav button").forEach(b=>b.onclick=()=>{
   document.querySelectorAll("#nav button").forEach(x=>x.classList.toggle("on",x===b));
   document.querySelectorAll(".tab").forEach(x=>x.classList.toggle("on",x.id==="t-"+b.dataset.t));
-  TAB=b.dataset.t;location.hash=TAB;refresh();});
+  TAB=b.dataset.t;location.hash=TAB;
+  const titleEl=$("tp-title");if(titleEl)titleEl.textContent=TITLES[TAB]||TAB;
+  refresh();});
 
 /* ---------- OVERVIEW ---------- */
 function svcCard(k,s,detail){
@@ -3046,6 +3104,7 @@ async function refresh(){
   busy=false;
 }
 document.addEventListener("keydown",e=>{if(e.key==="Escape")closeModal()});
+if(location.host)$("tp-addr").textContent=location.host;
 const h0=location.hash.slice(1);const nb=document.querySelector(`#nav button[data-t="${h0}"]`);
 if(nb)nb.click();else refresh();
 setInterval(refresh,30000);
