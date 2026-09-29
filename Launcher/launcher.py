@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔════╗                                        ╔════╗
-║      KillTheHost  —  Unified Launcher v1.4       ║
+║      KillTheHost  —  Unified Launcher v1.5       ║
 ║                                                  ║
 ║      Located at KillTheHost/Launcher/assets/     ║
 ║   Run via launch.bat / launch.sh in repo root    ║
@@ -36,7 +36,7 @@ from urllib.parse import urlparse
 LAUNCHER_PORT = 5000
 SYSTEM        = platform.system()          # "Linux" | "Darwin" | "Windows"
 BASE          = Path(__file__).parent.resolve()
-VERSION       = "1.4"
+VERSION       = "1.5"
 
 def _get_docker_version() -> str:
     """Return Docker version string, or 'Not found' if unavailable."""
@@ -106,7 +106,40 @@ SERVICES = {
         "color"    : "#F7DF1E",
         "needs_sg" : False,
     },
+    "sec_mngr": {
+        "label"    : "SEC-MNGR",
+        "subtitle" : "Security Manager & Threat Dashboard",
+        "version"  : "v1.0",
+        "dir"      : "assets/main/SEC-MNGR v1.0",
+        "script"   : "sec_mngr.py",
+        "port"     : 8080,
+        "color"    : "#DC2626",
+        "needs_sg" : False,
+    },
 }
+
+# Persistent launcher log (read by SEC-MNGR from ~/.killthehost/). No secrets are written here.
+LAUNCHER_LOG_DIR  = Path.home() / ".killthehost"
+LAUNCHER_LOG_FILE = LAUNCHER_LOG_DIR / "launcher.log"
+_launcher_log_lock = threading.Lock()
+
+
+def _persist_log(label: str, level: str, text: str):
+    try:
+        with _launcher_log_lock:
+            LAUNCHER_LOG_DIR.mkdir(parents=True, exist_ok=True)
+            try:
+                os.chmod(LAUNCHER_LOG_DIR, 0o700)
+            except OSError:
+                pass
+            if LAUNCHER_LOG_FILE.exists() and LAUNCHER_LOG_FILE.stat().st_size > 10 * 1024 * 1024:
+                LAUNCHER_LOG_FILE.replace(LAUNCHER_LOG_FILE.with_suffix(".log.1"))
+            fd = os.open(str(LAUNCHER_LOG_FILE), os.O_WRONLY | os.O_CREAT | os.O_APPEND, 0o600)
+            with os.fdopen(fd, "a", encoding="utf-8") as f:
+                f.write("%s [%s] [%s] %s\n" % (datetime.now().astimezone().isoformat(timespec="seconds"),
+                                              label, level.upper(), text.rstrip()))
+    except Exception:
+        pass
 
 
 # ────
@@ -267,6 +300,7 @@ class ServiceProcess:
         if len(self.log) > 1000:
             self.log = self.log[-800:]
         print(f"[{entry['ts']}] [{self.cfg['label']}] {text}", flush=True)
+        _persist_log(self.cfg["label"], level, text)
 
     def _err(self, msg: str) -> dict:
         self._log_entry(msg, "error")
@@ -730,6 +764,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <button class="fbtn"        data-f="mail_srvr" onclick="setFilter('mail_srvr',this)">MAIL-SRVR</button>
         <button class="fbtn"        data-f="stax_mngr" onclick="setFilter('stax_mngr',this)">STAX-MNGR</button>
         <button class="fbtn"        data-f="node_mngr" onclick="setFilter('node_mngr',this)">NODE-MNGR</button>
+        <button class="fbtn"        data-f="sec_mngr"  onclick="setFilter('sec_mngr',this)">SEC-MNGR</button>
       </div>
       <button class="cbtn" onclick="clearLog()">Clear All</button>
     </div>
@@ -824,7 +859,7 @@ async function svcAction(key, action) {
 }
 
 async function startAll() {
-  const ordered = ["php_mngr", "db_3ngin3", "mail_srvr", "stax_mngr", "node_mngr"];
+  const ordered = ["sec_mngr", "php_mngr", "db_3ngin3", "mail_srvr", "stax_mngr", "node_mngr"];
   for (let i = 0; i < ordered.length; i++) {
     if (!SERVICES[ordered[i]]) continue;
     await api("/api/" + ordered[i] + "/start", "POST");
@@ -839,6 +874,7 @@ function openAllPanels() {
   window.open("http://localhost:6060", "_blank");
   window.open("http://localhost:6161", "_blank");
   window.open("http://localhost:7272", "_blank");
+  window.open("http://localhost:8080", "_blank");
 }
 async function stopAll() {
   for (const k of Object.keys(SERVICES)) await api(`/api/${k}/stop`, "POST");

@@ -1,6 +1,6 @@
-<h1 align="center">KillTheHost v1.4</h1>
+<h1 align="center">KillTheHost v1.5</h1>
 <p align="center">
-  <img src="https://img.shields.io/badge/Latest-v1.4.0-brightgreen" />
+  <img src="https://img.shields.io/badge/Latest-v1.5.0-brightgreen" />
 </p>
 <br/>
 <p align="center">
@@ -23,8 +23,8 @@
 
 <br/>
 
-> **KillTheHost** brings together **PHP-MNGR**, **DB-3NGIN3**, **MAIL-SRVR**, **STAX-MNGR**, and **NODE-MNGR** into one unified workflow —  
-> run your stack locally, manage your databases, host your own email, deploy Docker stacks, manage Node.js apps, sync real domains, and go live in a click.
+> **KillTheHost** brings together **PHP-MNGR**, **DB-3NGIN3**, **MAIL-SRVR**, **STAX-MNGR**, **NODE-MNGR**, and **SEC-MNGR** into one unified workflow —  
+> run your stack locally, manage your databases, host your own email, deploy Docker stacks, manage Node.js apps, lock it all down with 24/7 security monitoring, sync real domains, and go live in a click.
 
 <br/>
 
@@ -38,9 +38,45 @@
 
 <br/>
 
-## 🆕 What's New in v1.4 — NODE-MNGR
+## 🆕 What's New in v1.5 — SEC-MNGR
 
-> **KillTheHost v1.4 introduces NODE-MNGR** — a full browser-based Node.js app manager that brings the same zero-friction deployment experience to React, Next.js, Vite, and Node.js projects.
+> **KillTheHost v1.5 introduces SEC-MNGR**, a security manager and threat dashboard for the whole stack. It watches every KillTheHost manager, bans attacking IPs automatically, and monitors the host around the clock.
+
+Once your sites, databases and mail server are public, they get probed, scanned and brute-forced. SEC-MNGR collects the logs from every KillTheHost service in one place, detects attack patterns the way Fail2Ban does, and blocks offending IPs or entire CIDR ranges at the firewall.
+
+### 🛡️ SEC-MNGR Highlights
+
+| Feature | Details |
+|---|---|
+| **Unified access log** | Access and auth logs from PHP-MNGR, DB-3NGIN3, MAIL-SRVR, STAX-MNGR, NODE-MNGR, the launcher and Docker, merged into one searchable log with CSV/JSON export |
+| **IP intelligence** | Per-IP history: request count, first/last seen, services hit, blocked attempts |
+| **IP & CIDR bans** | Exact IPs or IPv4/IPv6 CIDR ranges; temporary, permanent or soft-warn bans, with notes |
+| **Allowlist** | Trusted IPs and ranges override every ban rule |
+| **Fail2Ban-style detection** | Built-in rules (AUTH_FAIL, RATE_FLOOD, PATH_PROBE, MALFORMED, MAIL_FAIL, DB_FAIL, REPEAT_OFFENDER) run every 30s; thresholds can be edited in the UI |
+| **Escalating penalties** | A 2nd offense doubles the ban length; a 3rd offense makes it permanent |
+| **Firewall enforcement** | Uses UFW, then iptables/ip6tables (plus `DOCKER-USER`), then HTTP-level blocking as a fallback |
+| **24/7 monitoring** | Every 60s: service health, CPU/memory/disk, Docker, UFW status, and alerts for new listening ports |
+| **Security timeline** | INFO / WARN / HIGH / CRITICAL events, each saying exactly which rule fired |
+| **Local-only by default** | Binds to `127.0.0.1:8080`, has CSRF and DNS-rebinding protection, and keeps its data at `0700`/`0600` permissions |
+
+```
+  PHP-MNGR · DB-3NGIN3 · MAIL-SRVR · STAX-MNGR · NODE-MNGR · Launcher · Docker
+        │  logs
+        ▼
+  SEC-MNGR (127.0.0.1:8080)  ──►  detection rules  ──►  UFW / iptables / HTTP block
+        │
+        └──►  24/7 health + port monitoring  ──►  security timeline & alerts
+```
+
+> 👉 **[Full SEC-MNGR Reference ↓](#️-sec-mngr-reference)**
+
+<br/>
+
+---
+
+## 🟢 Introduced in v1.4 — NODE-MNGR
+
+> **KillTheHost v1.4 introduced NODE-MNGR** — a full browser-based Node.js app manager that brings the same zero-friction deployment experience to React, Next.js, Vite, and Node.js projects.
 
 No more juggling terminal windows, manually running `npm start`, or tracking which port your app is on. NODE-MNGR gives every Node.js project its own dashboard card with live status, controls, logs, and one-click public access via Cloudflare Tunnels.
 
@@ -83,16 +119,17 @@ No more juggling terminal windows, manually running `npm start`, or tracking whi
 
 ## 🧩 What's Inside
 
-KillTheHost is a bundle of five open-source, single-file Python tools unified by a cross-platform browser-based launcher — designed to eliminate the gap between local development and live deployment.
+KillTheHost is a bundle of six open-source, single-file Python tools unified by a cross-platform browser-based launcher — designed to eliminate the gap between local development and live deployment.
 
 | Tool | Version | Purpose |
 |---|---|---|
-| ⚡ **Launcher** | `v1.4` | Unified browser UI to start, stop, and monitor all tools — zero dependencies |
+| ⚡ **Launcher** | `v1.5` | Unified browser UI to start, stop, and monitor all tools — zero dependencies |
 | 🐘 **PHP-MNGR** | `v2.5` | Local & Public PHP project manager — spin up, manage, and publish PHP sites via Docker |
 | 🗄️ **DB-3NGIN3** | `v1.2` | Local database service manager — PostgreSQL, MySQL, MariaDB, Redis, MongoDB |
 | ✉️ **MAIL-SRVR** | `v1.0` | Self-hosted email server — send, receive, IMAP, DKIM, SPF, DMARC, and a full browser mail client |
 | 🐳 **STAX-MNGR** | `v1.0` | Docker stack manager — deploy and manage pre-configured application stacks with one click |
-| 🟢 **NODE-MNGR** | `v1.0` | Node.js app manager — deploy and manage React, Next.js, Vite, and Node.js projects *(New in v1.4)* |
+| 🟢 **NODE-MNGR** | `v1.0` | Node.js app manager — deploy and manage React, Next.js, Vite, and Node.js projects |
+| 🛡️ **SEC-MNGR** | `v1.0` | Security manager — unified access logs, IP bans/allowlist, Fail2Ban-style detection, 24/7 host monitoring (port 8080) *(New in v1.5)* |
 
 Together, they connect to your **Namecheap** domains and route traffic through **Cloudflare Tunnels** — putting your localhost on the public internet without a single line of server config.
 
@@ -136,10 +173,15 @@ Spin up or shut down **PostgreSQL, MySQL, MariaDB, Redis, and MongoDB** Docker c
 ### ✉️ Self-Hosted Email Server
 Run a complete email server on your own VPS. MAIL-SRVR handles everything: SMTP delivery and inbound receiving, IMAP inbox access, DKIM signing, SPF and DMARC records, and an automated deliverability checklist. Includes a full browser-based email client with compose, rich text editing, file attachments, draft saving, folder navigation (Inbox, Sent, Drafts, Trash, Junk), and per-account HTML signatures.
 
-### 🟢 Node.js App Manager *(New in v1.4)*
+### 🟢 Node.js App Manager
 Deploy and manage React, Next.js, Vite, and Node.js projects from a browser-based dashboard. NODE-MNGR handles app deployment, start/stop/restart controls, per-app Node.js version switching via `nvm`, real-time log streaming, and automatic port assignment — all without touching the terminal. Supports both `npm` and `yarn`. Each app gets its own card with live status, port info, and direct controls. Expose any app to the public web via Cloudflare Tunnels with one click.
 
 > 👉 **[Jump to NODE-MNGR Reference ↓](#-node-mngr-reference)**
+
+### 🛡️ Security Manager — SEC-MNGR *(New in v1.5)*
+A single-file, zero-dependency security dashboard on **http://127.0.0.1:8080**. SEC-MNGR collects access and auth logs from every KillTheHost manager into one searchable log. It tracks each IP's history and bans offenders (single IPs or IPv4/IPv6 CIDR ranges) with temporary, permanent or soft-warn bans. A Fail2Ban-style detection engine runs every 30 seconds, and a monitor checks services, CPU/memory/disk, Docker, UFW and listening ports every 60 seconds. Bans are enforced through UFW, then iptables, then HTTP-level blocking as a fallback.
+
+> 👉 **[Jump to SEC-MNGR Reference ↓](#️-sec-mngr-reference)**
 
 <br/>
 
@@ -209,8 +251,10 @@ KillTheHost/
             │   └── mailserver.py
             ├── STAX-MNGR v1.0/
             │   └── staxmngr.py
-            └── NODE-MNGR v1.0/         ← New in v1.4
-                └── nodemngr.py
+            ├── NODE-MNGR v1.0/
+            │   └── nodemngr.py
+            └── SEC-MNGR v1.0/          ← New in v1.5
+                └── sec_mngr.py         ← Security manager (port 8080)
 ```
 
 <br/>
@@ -470,6 +514,107 @@ Deploy and manage pre-configured Docker application stacks with a single click. 
 
 ---
 
+## 🛡️ SEC-MNGR Reference
+
+SEC-MNGR (`Launcher/assets/main/SEC-MNGR v1.0/sec_mngr.py`) is the security layer for the whole KillTheHost stack. It is a single Python 3.8+ file that uses only the standard library, with the dashboard embedded in it. Start it from the launcher, or run it directly:
+
+```bash
+python3 "Launcher/assets/main/SEC-MNGR v1.0/sec_mngr.py"                 # http://127.0.0.1:8080
+python3 "Launcher/assets/main/SEC-MNGR v1.0/sec_mngr.py" --host 127.0.0.1 --port 8080 --no-browser
+# Environment overrides: SECMNGR_HOST, SECMNGR_PORT, SECMNGR_NO_BROWSER=1
+```
+
+> By default the panel binds to **127.0.0.1**. It has no login, so do not expose it publicly. If you need remote access, use an SSH tunnel (`ssh -L 8080:127.0.0.1:8080 user@vps`).
+
+### Features
+
+| Area | What it does |
+|---|---|
+| **Access logging** | Tails the log files in `~/.phpmngr/`, `~/.db3ngin3/`, `~/.mailsrvr/` (including `mail-logs/`), `~/.staxmngr/`, `~/.nodemngr/` and the launcher's `~/.killthehost/launcher.log`. It also reads the Docker logs of manager containers (`phpmngr-*`, `db3ngin3_*`, `killthehost-mail*`, `stax-*`). Each line is normalised to timestamp, IP, method, path, status, user agent, service and event type, then appended to `~/.secmngr/access_logs.jsonl`. |
+| **Log parsing** | Common/combined access logs (Nginx/Apache/PHP), Python `http.server` errors, Postfix SASL and Dovecot auth failures, SMTP protocol errors and rejects, MySQL/MariaDB "Access denied", PostgreSQL `pg_hba` and password failures, MongoDB auth failures, and generic "authentication failed" lines. |
+| **Search & export** | Filter by service, IP or CIDR, event type, status, free text and date range. Searches the in-memory ring by default, or the full on-disk history. Exports to **CSV** or **JSON**. |
+| **Rotation** | Retention defaults to **30 days** and is configurable, with an optional size cap (`max_log_mb`). Rotation runs every 6 hours. |
+| **IP intelligence** | Tracks each IP's request count, first and last seen, services touched, event-type breakdown, blocked requests, bans, and last user agent. The detail view shows ban history, alerts and recent log lines. |
+| **Bans** | Supports exact IPs and IPv4/IPv6 CIDR ranges (at least /8 for IPv4 and /16 for IPv6). Ban types are **temp**, **perm** and **soft-warn** (logged, not blocked), each with a reason or note. Bans persist in `~/.secmngr/bans.json` and are re-applied on start. |
+| **Escalation** | A 2nd offense doubles the ban duration and a 3rd offense makes it permanent. The `REPEAT_OFFENDER` rule also promotes any IP banned *N* times to a permanent ban. |
+| **Allowlist** | Overrides everything. Adding an entry lifts any ban it covers, and allowlisted IPs are never auto-banned. Loopback and the host's own addresses are always protected, so you cannot lock yourself out. |
+| **Detection engine** | A background thread runs every 30 seconds. Rules are listed below, and every threshold, window, duration and on/off toggle can be edited in the UI. Alerts name the rule that fired, the count, the window and the services involved. In **monitor** mode, detections create soft-warns instead of bans. |
+| **Monitoring** | A background thread runs every 60 seconds. It checks service UP/DOWN/WARN for each manager's port (WARN means bound to all interfaces), CPU, memory, disk, the Docker daemon, UFW status and rules, and listening ports via `ss` or `netstat`. It alerts on **new suspicious ports** (unknown public listeners, and high-risk ports such as 23, 2375, 4444, 5900 and 3389). It also warns when a manager's secret file is readable by other users. Events go to `~/.secmngr/events.jsonl` with INFO, WARN or CRITICAL severity, and a snapshot goes to `~/.secmngr/health.json`. |
+| **Dashboard** | Dark red and black theme with tabs: **Overview · Access Logs · IP Manager · Detection Rules · Monitoring · System Health · Settings**. Auto-refreshes every 30 seconds. Includes a threat level, a posture score with findings, a 24-hour traffic chart, service health cards, an events timeline, and export buttons for logs and bans (CSV, JSON, TXT blocklist). |
+
+### Detection Rules (defaults)
+
+| Rule | Trigger | Ban |
+|---|---|---|
+| `AUTH_FAIL` | 5 auth failures (HTTP 401/403, app auth errors) in 10 min | 1 h |
+| `RATE_FLOOD` | 100 HTTP requests in 60 s | 30 min |
+| `PATH_PROBE` | 10 × 404 in 5 min (scanner enumeration) | 2 h |
+| `MALFORMED` | 20 malformed requests (400/408/414/431/505, bad request lines, SMTP protocol abuse) in 10 min | 1 h |
+| `MAIL_FAIL` | 3 SMTP/IMAP auth failures in 5 min | 4 h |
+| `DB_FAIL` | 5 database auth failures in 10 min | 2 h |
+| `REPEAT_OFFENDER` | IP banned 3 times | permanent |
+
+### Enforcement Model
+
+1. **UFW** (`ufw prepend deny from <ip>`) if UFW is installed and active.
+2. **iptables / ip6tables** (`-I INPUT 1 … -j DROP`, tagged with a `secmngr` comment) otherwise. When the `DOCKER-USER` chain exists, SEC-MNGR adds a matching rule there too, because Docker-published ports bypass UFW.
+3. **HTTP-level** blocking always applies: SEC-MNGR itself returns 403 to banned IPs, and every ban is written to `~/.secmngr/blocklist.txt` for other tools to use.
+
+Firewall commands need root or passwordless `sudo -n`. **Without them, SEC-MNGR does not fail.** It logs the exact commands to run (see *IP Manager → Firewall commands needing sudo* and *Monitoring → Pending commands*) and relies on HTTP-level blocking until they are run.
+
+### REST API
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/status` | Threat level, posture score and findings, ban counts, alerts, service states |
+| GET | `/api/logs?service=&ip=&event_type=&q=&since=&until=&limit=&deep=1` | Search access logs |
+| GET | `/api/logs/export?format=csv\|json` | Export logs (same filters) |
+| GET | `/api/bans` | Active bans, allowlist, firewall capabilities |
+| POST | `/api/bans` | `{"ip": "1.2.3.4" or "cidr", "type": "temp\|perm\|soft", "duration": 3600, "reason": "..."}` |
+| DELETE | `/api/bans/{ip}` | Unban (URL-encode CIDRs: `198.51.100.0%2F24`) |
+| GET | `/api/bans/export?format=csv\|json\|txt` | Export bans / plain blocklist |
+| GET/POST/DELETE | `/api/allowlist[/{cidr}]` | Manage the allowlist |
+| GET | `/api/ips`, `/api/ips/{ip}` | IP intelligence list / detail |
+| GET | `/api/events?hours=&severity=&category=` | Security event timeline |
+| GET | `/api/health` | Latest monitoring snapshot and log sources |
+| GET/POST | `/api/rules` | Read or update detection rules (`{"rules":[{"id":"AUTH_FAIL","threshold":5,...}]}`) |
+| GET | `/api/stats?hours=24` | Aggregates: hourly traffic, top IPs and offenders, bans by rule |
+| GET/POST | `/api/settings` | Retention, intervals, mode, thresholds, known ports |
+
+Every mutating request (POST or DELETE) must send `X-SecMngr-Request: 1`, and every POST must send `Content-Type: application/json`. Cross-origin requests and unknown `Host` headers are rejected, which protects against CSRF and DNS rebinding. Example:
+
+```bash
+curl -X POST http://127.0.0.1:8080/api/bans \
+  -H 'X-SecMngr-Request: 1' -H 'Content-Type: application/json' \
+  -d '{"ip":"203.0.113.9","type":"temp","duration":3600,"reason":"scanner"}'
+```
+
+### Security Model
+
+- `~/.secmngr/` is created with mode `0700`, and every file in it is written `0600` (atomic writes).
+- SEC-MNGR stores **no secrets**. Other managers' directories and configs are opened **read-only**.
+- Shell commands are never built from strings. Firewall calls use argument lists, and IPs are validated with `ipaddress` first.
+- Every value shown in the dashboard is HTML-escaped, because log lines contain attacker-controlled data. Responses send a strict CSP and `X-Frame-Options: DENY`.
+
+### Data Locations
+
+| Item | Path |
+|---|---|
+| Access log (append-only JSONL) | `~/.secmngr/access_logs.jsonl` |
+| Security events | `~/.secmngr/events.jsonl` |
+| Bans, allowlist, offense counters | `~/.secmngr/bans.json` |
+| Detection rules | `~/.secmngr/rules.json` |
+| Settings | `~/.secmngr/settings.json` |
+| Latest health snapshot | `~/.secmngr/health.json` |
+| Per-IP statistics | `~/.secmngr/ip_stats.json` |
+| Log tail offsets | `~/.secmngr/tail_state.json` |
+| Plain blocklist (one IP/CIDR per line) | `~/.secmngr/blocklist.txt` |
+| Launcher log (read by SEC-MNGR) | `~/.killthehost/launcher.log` |
+
+<br/>
+
+---
+
 ## 🗺️ Survive Reboots
 
 ```bash
@@ -514,8 +659,9 @@ systemctl --user enable --now killthehost
 - [x] Unified cross-platform launcher (v1.1)
 - [x] Self-hosted email server with full browser client (MAIL-SRVR v1.1)
 - [x] Docker stack manager with pre-configured application stacks (STAX-MNGR v1.0)
-- [x] Node.js app manager with nvm version switching and Cloudflare tunnel support (NODE-MNGR v1.1) ← **New in v1.4**
+- [x] Node.js app manager with nvm version switching and Cloudflare tunnel support (NODE-MNGR v1.1)
 - [x] Additional domain registrar support (GoDaddy, Porkbun, Cloudflare Registrar…)
+- [x] Security manager with unified access logging, IP/CIDR bans, Fail2Ban-style detection and 24/7 monitoring (SEC-MNGR v1.0) ← **New in v1.5**
 - [ ] Multi-domain email support in MAIL-SRVR
 - [ ] MAIL-SRVR relay/smarthost option for providers that block port 25
 - [ ] NODE-MNGR: GitHub auto-deploy / webhook triggers
@@ -537,7 +683,7 @@ systemctl --user enable --now killthehost
 
 <br/>
 
-### 🟢 NODE-MNGR — Node.js App Manager *(New in v1.4)*
+### 🟢 NODE-MNGR — Node.js App Manager
 
 [![NODE-MNGR](https://i.ibb.co/yF8jMP6M/NODE-MNGR.png)](https://ibb.co/VYv4h9gh)
 
