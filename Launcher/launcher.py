@@ -16,6 +16,8 @@
 
 import sys
 import os
+import atexit
+import shutil
 import signal
 import json
 import socket
@@ -1075,6 +1077,109 @@ def preflight() -> list:
 
 
 # ────
+#  PID FILE + GTK MODULE FALLBACK
+# ────
+
+LAUNCHER_PID_FILE = LAUNCHER_LOG_DIR / "launcher.pid"
+GTK_MARKER        = LAUNCHER_LOG_DIR / "gtk-modules.checked"   # delete to re-run the check
+GTK_PACKAGES = [
+    "libcanberra-gtk-module", "libcanberra-gtk3-module",   # canberra-gtk-module
+    "packagekit-gtk3-module", "gir1.2-packagekitglib-2.0",  # pk-gtk-module
+]
+
+
+def _write_pid_file():
+    try:
+        LAUNCHER_LOG_DIR.mkdir(parents=True, exist_ok=True)
+        LAUNCHER_PID_FILE.write_text(str(os.getpid()))
+    except OSError as exc:
+        print(f"  [NOTICE] Could not write PID file {LAUNCHER_PID_FILE}: {exc}")
+
+
+def _remove_pid_file():
+    try:
+        if LAUNCHER_PID_FILE.exists() and LAUNCHER_PID_FILE.read_text().strip() == str(os.getpid()):
+            LAUNCHER_PID_FILE.unlink()
+    except OSError:
+        pass
+
+
+def ensure_gtk_modules():
+    """Fallback for direct `python3 launcher.py` runs: install missing Gtk modules
+    on Debian/Ubuntu so browser windows don't log canberra/pk-gtk warnings.
+    Packages the distro doesn't ship are skipped. Never blocks startup."""
+    if SYSTEM != "Linux" or os.environ.get("KTH_GTK_CHECKED") == "1" or GTK_MARKER.exists():
+        return
+    if not shutil.which("dpkg") or not shutil.which("apt-get"):
+        return
+
+    def _mark_done():
+        try:
+            LAUNCHER_LOG_DIR.mkdir(parents=True, exist_ok=True)
+            GTK_MARKER.touch()
+        except OSError:
+            pass
+
+    def _run(cmd, timeout=300):
+        try:
+            return subprocess.run(cmd, capture_output=True, text=True, timeout=timeout)
+        except (OSError, subprocess.SubprocessError):
+            return None
+
+    missing = []
+    for pkg in GTK_PACKAGES:
+        r = _run(["dpkg", "-s", pkg], timeout=5)
+        if r is None:
+            return
+        if "Status: install ok installed" not in r.stdout:
+            missing.append(pkg)
+    if not missing:
+        return
+
+    print("  [SEC-MNGR] Installing required Gtk modules...")
+    prefix = []
+    if os.geteuid() != 0:
+        if not shutil.which("sudo"):
+            print(f"  [NOTICE] Fix manually: apt-get install -y {' '.join(missing)}\n")
+            return
+        prefix = ["sudo", "-n"]   # -n: never prompt for a password
+
+    def _available():
+        out = []
+        for pkg in missing:
+            r = _run(["apt-cache", "policy", pkg], timeout=15)
+            cand = ""
+            if r:
+                for line in r.stdout.splitlines():
+                    if "Candidate:" in line:
+                        cand = line.split(":", 1)[1].strip()
+            if cand and cand != "(none)":
+                out.append(pkg)
+        return out
+
+    avail = _available()
+    if not avail:
+        _run([*prefix, "apt-get", "update"])
+        avail = _available()
+    if not avail:
+        print("  [NOTICE] Gtk module packages not available on this distro — skipping.\n")
+        _mark_done()
+        return
+
+    install = [*prefix, "apt-get", "install", "-y", *avail]
+    for refresh_first in (False, True):   # retry once with refreshed package lists
+        if refresh_first:
+            _run([*prefix, "apt-get", "update"])
+        r = _run(install)
+        if r is not None and r.returncode == 0:
+            print(f"  [SEC-MNGR] Gtk modules installed: {' '.join(avail)}\n")
+            _mark_done()
+            return
+    print("  [NOTICE] Gtk module install skipped/failed — continuing anyway.")
+    print(f"  Fix manually: sudo apt-get install -y {' '.join(avail)}\n")
+
+
+# ────
 #  ENTRY POINT
 # ────
 
@@ -1087,6 +1192,8 @@ def main():
   Python   : {sys.version.split()[0]}
   Root     : {BASE}
 """)
+
+    ensure_gtk_modules()
 
     issues = preflight()
     if issues:
@@ -1113,6 +1220,17 @@ def main():
         print(f"  Change LAUNCHER_PORT at the top of launcher.py.\n")
         sys.exit(1)
 
+    _write_pid_file()
+    atexit.register(_remove_pid_file)
+
+    # Treat SIGTERM (sent by stop.sh) like Ctrl+C so services shut down cleanly
+    def _on_sigterm(signum, frame):
+        raise KeyboardInterrupt
+    try:
+        signal.signal(signal.SIGTERM, _on_sigterm)
+    except (ValueError, OSError):
+        pass
+
     url = f"http://localhost:{LAUNCHER_PORT}"
     print(f"  Control panel : {url}")
     print(f"  Press Ctrl+C  : stop launcher\n")
@@ -1130,8 +1248,10 @@ def main():
         for p in procs.values():
             if p.running:
                 p.stop()
-        server.shutdown()
+        server.server_close()
         print("  Done. Goodbye.\n")
+    finally:
+        _remove_pid_file()
 
 
 if __name__ == "__main__":
