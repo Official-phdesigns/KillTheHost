@@ -708,31 +708,39 @@ systemctl --user enable --now killthehost
 
 ### ⚡ KillTheHost Launcher — Main Control Panel
 
-[![LAUNCHER](.github/assets/screenshots/LAUNCHER-v1.5.png)](.github/assets/screenshots/LAUNCHER-v1.5.png)
+<img src=".github/assets/screenshots/LAUNCHER-v1.5.png" width="900" alt="KillTheHost Launcher — main control panel" />
 
-*Dedicated control panel for managing all six KillTheHost services, now including SEC-MNGR — status, uptime, runtime controls, and a filterable console*
+*Dedicated control panel for every KillTheHost service, now including SEC-MNGR — status, uptime, per-service start/stop, global controls, and a filterable console*
 
 <br/>
 
 ### 🛡️ SEC-MNGR — Security Overview *(New in v1.5)*
 
-[![SEC-MNGR Overview](.github/assets/screenshots/SEC-MNGR-overview.png)](.github/assets/screenshots/SEC-MNGR-overview.png)
+<img src=".github/assets/screenshots/SEC-MNGR-overview.png" width="900" alt="SEC-MNGR — security overview" />
 
-*Threat level, security posture score, active bans, 24h alerts, live health of every KillTheHost service, posture findings, and a recent-alerts timeline*
+*Threat level, security posture score, active bans, 24h alerts, live health of every KillTheHost service, traffic chart, and posture findings*
 
 <br/>
 
 ### 🛡️ SEC-MNGR — IP Manager & Auto-Bans *(New in v1.5)*
 
-[![SEC-MNGR IP Manager](.github/assets/screenshots/SEC-MNGR-ip-manager.png)](.github/assets/screenshots/SEC-MNGR-ip-manager.png)
+<img src=".github/assets/screenshots/SEC-MNGR-ip-manager.png" width="900" alt="SEC-MNGR — IP manager and auto-bans" />
 
 *Ban single IPs or CIDR ranges, manage the allowlist, and review automatic bans from AUTH_FAIL, RATE_FLOOD, PATH_PROBE, MAIL_FAIL, and DB_FAIL rules — with CSV/JSON/blocklist export*
 
 <br/>
 
+### 🛡️ SEC-MNGR — Monitoring *(New in v1.5)*
+
+<img src=".github/assets/screenshots/SEC-MNGR-monitoring.png" width="900" alt="SEC-MNGR — monitoring" />
+
+*Live event feed for suspicious listening ports and service up/down changes, a known-listener table, and firewall backend/enforcement status*
+
+<br/>
+
 ### 🟢 NODE-MNGR — Node.js App Manager
 
-[![NODE-MNGR](https://i.ibb.co/yF8jMP6M/NODE-MNGR.png)](https://ibb.co/VYv4h9gh)
+<img src=".github/assets/screenshots/NODE-MNGR.png" width="900" alt="NODE-MNGR — Node.js app manager" />
 
 *Deploy and manage React, Next.js, Vite, and Node.js apps — live status, per-app Node version switching, real-time logs, and Cloudflare tunnel support*
 
@@ -740,33 +748,33 @@ systemctl --user enable --now killthehost
 
 ### 🐘 PHP-MNGR — Site Management View
 
-[![PHP-MNGR](https://i.ibb.co/1GfWymnc/PHP-MNGR.png)](https://ibb.co/B2VMWCPk)
+<img src=".github/assets/screenshots/PHP-MNGR.png" width="900" alt="PHP-MNGR — site management view" />
 
-*Manage & create every PHP project with runtime info, port visibility, inline editing, and Cloudflare tunneling*
+*Manage & create every PHP project with runtime info, port visibility, inline editing, domains, and Cloudflare tunneling*
 
 <br/>
 
 ### 🗄️ DB-3NGIN3 — Database Instance Control
 
-[![DB-3NGIN3](https://i.ibb.co/p6VpZc96/DB-3-NGIN3.png)](https://ibb.co/hxQvHbtx)
+<img src=".github/assets/screenshots/DB-3NGIN3.png" width="900" alt="DB-3NGIN3 — database instance control" />
 
-*Spin up and manage PostgreSQL, MySQL, MariaDB, Redis, and MongoDB — live status, connection strings, persistent data*
+*Spin up and manage PostgreSQL, MySQL, MariaDB, Redis, and MongoDB instances — live status, connection strings, persistent data*
 
 <br/>
 
-### ✉️ MAIL-SRVR — Browser Email Client
+### ✉️ MAIL-SRVR — Mail Server Dashboard
 
-[![MAIL-SRVR](https://i.ibb.co/qMvFTVM6/MAIL-SRVR.png)](https://ibb.co/5WPxbwWZ)
+<img src=".github/assets/screenshots/MAIL-SRVR.png" width="900" alt="MAIL-SRVR — mail server dashboard" />
 
-*Full email client — compose with rich text and attachments, inbox with folders, deliverability checklist, DKIM provisioning*
+*Server status, messages, accounts, and DKIM at a glance — dev mode via Mailpit, diagnostics, plus inbox, compose, domains, accounts, and spam filter*
 
 <br/>
 
 ### 🐳 STAX-MNGR — Docker Stack Manager
 
-[![STAX-MNGR](https://i.ibb.co/bj2pjdmh/STAX-MNGR.png)](https://ibb.co/xKfVK5Lv)
+<img src=".github/assets/screenshots/STAX-MNGR.png" width="900" alt="STAX-MNGR — Docker stack manager" />
 
-*Deploy pre-configured Docker stacks — VaultWarden, Nextcloud, Gitea, Jellyfin, Ollama, and more — with one click*
+*Every Docker container on the system at a glance, plus one-click pre-configured stacks — VaultWarden, Nextcloud, Gitea, Jellyfin, Ollama, and more*
 
 </div>
 
