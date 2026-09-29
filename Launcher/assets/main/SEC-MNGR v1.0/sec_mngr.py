@@ -83,6 +83,10 @@ SERVICES = {
 # Standard suite ports (Launcher, SEC-MNGR, NODE-MNGR, DB-3NGIN3, STAX-MNGR, MAIL-SRVR, PHP-MNGR)
 SUITE_DEFAULT_PORTS = frozenset({5000, 8080, 7272, 7734, 6161, 6060, 4280})
 
+# System / host-management ports that are always trusted — never flagged as suspicious
+# regardless of the user's saved config (Cockpit=9090, pmcd/PCP=44321)
+SYSTEM_TRUSTED_PORTS = frozenset({9090, 44321})
+
 
 def suite_ports():
     """All ports owned by KillTheHost suite tools (read live: SEC-MNGR's port can change at runtime)."""
@@ -126,7 +130,7 @@ DEFAULT_SETTINGS = {
         "22", "53", "80", "443", "25", "110", "143", "465", "587", "993", "995",
         "631", "1025", "8025", "5000", "4280", "7734", "6060", "6161", "7272", "8080",
         "5432", "3306", "3307", "6379", "27017", "3100-3199", "8100-8199",
-        "9090", "44321",  # 9090=Cockpit, 44321=pmcd (Performance Co-Pilot)
+        "9090", "44321",  # 9090=Cockpit, 44321=pmcd/PCP (also hardcoded in SYSTEM_TRUSTED_PORTS)
     ],
     "allowed_hosts":        [],             # extra Host headers accepted by the panel
     "open_browser":         True,
@@ -741,6 +745,9 @@ class Config:
     def known_port(self, port, proto="tcp"):
         # KillTheHost suite ports are always trusted, even if the saved list omits them
         if proto == "tcp" and port in suite_ports():
+            return True
+        # System host-management ports (Cockpit, pmcd/PCP) are always trusted
+        if port in SYSTEM_TRUSTED_PORTS:
             return True
         for spec in self.get("known_ports"):
             p = spec
