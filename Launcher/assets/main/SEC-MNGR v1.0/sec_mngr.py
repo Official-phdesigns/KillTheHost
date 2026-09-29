@@ -2167,14 +2167,19 @@ class SecurityCore:
         sev = Counter(e["severity"] for e in ev24)
         bans24 = [e for e in ev24 if e.get("category") in ("ban", "detection") and e["severity"] != "INFO"]
         svc = health.get("services") or {}
-        if sev["CRITICAL"] >= 5 or score < 40:
+        # Threat level based on active threats, not just historical events
+        active_critical = sev["CRITICAL"]
+        active_warn = sev["WARN"]
+        active_bans = len(hard)  # Only count active bans, not historical
+        
+        if active_critical >= 5 or score < 40:
             level = "CRITICAL"
-        elif sev["CRITICAL"] > 0 or len(bans24) >= 10 or score < 60:
+        elif active_critical > 0 or active_bans >= 10 or score < 60:
             level = "HIGH"
-        elif bans24 or sev["WARN"] > 5 or score < 85:
+        elif (active_critical + active_warn > 0) or active_bans > 0 or score < 85:
             level = "ELEVATED"
         else:
-            level = "LOW"
+            level = "SECURE"
         return {
             "version": VERSION, "time": iso(now()), "uptime": int(now() - self.started),
             "threat_level": level, "posture_score": score, "findings": findings,
@@ -2662,6 +2667,7 @@ a{color:var(--accent)}
 .sub{color:var(--dim);font-size:11px}
 .live-dot{font-size:12px;color:var(--accent)}
 .pill{padding:3px 10px;border-radius:999px;font-size:11px;font-weight:700;border:1px solid}
+.lv-SECURE{color:var(--ok);border-color:var(--ok)}
 .lv-LOW{color:var(--ok);border-color:var(--ok)}
 .lv-ELEVATED{color:var(--warn);border-color:var(--warn)}
 .lv-HIGH{color:#fb923c;border-color:#fb923c}
@@ -2747,7 +2753,7 @@ label.f{display:flex;flex-direction:column;gap:3px;font-size:11px;color:var(--di
     <span class="tp-title" id="tp-title">Overview</span>
     <span class="tp-addr" id="tp-addr">127.0.0.1:8080</span>
     <div class="grow"></div>
-    <span id="lvl" class="pill lv-LOW">THREAT: ...</span>
+    <span id="lvl" class="pill lv-SECURE">THREAT: ...</span>
     <span class="live-dot">&#x25CF; Live</span>
     <span class="muted" id="upd" style="font-size:11px">&#x2014;</span>
   </div>
