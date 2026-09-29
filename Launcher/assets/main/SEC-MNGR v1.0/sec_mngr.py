@@ -2602,22 +2602,22 @@ class Handler(BaseHTTPRequestHandler):
 #  EMBEDDED DASHBOARD
 # ─────────────────────────────────────────────────────────────────────────────
 
-FAVICON = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 64 64">'
+FAVICON = ('<svg xmlns="http://www.w3.org/2000/svg" viewBox="0 0 40 40">'
            '<defs><linearGradient id="g" x1="0" y1="0" x2="1" y2="1">'
-           '<stop offset="0" stop-color="#ff56b9"/><stop offset=".62" stop-color="#ef63d6"/>'
-           '<stop offset="1" stop-color="#c86bff"/></linearGradient></defs>'
-           '<rect width="64" height="64" rx="17" fill="url(#g)"/>'
-           '<text x="32" y="42" text-anchor="middle" font-family="Menlo,Consolas,monospace" '
-           'font-size="26" font-weight="700" fill="#fff" letter-spacing="-1">&gt;_</text>'
+           '<stop offset="0%" stop-color="#8B5CF6"/>'
+           '<stop offset="100%" stop-color="#E879C9"/>'
+           '</linearGradient></defs>'
+           '<rect x="2" y="2" width="36" height="36" rx="9" fill="url(#g)"/>'
+           '<path d="M12 14 L18 20 L12 26" stroke="#ffffff" stroke-width="2.8" '
+           'stroke-linecap="round" stroke-linejoin="round" fill="none"/>'
+           '<rect x="20" y="24" width="9" height="2.6" rx="1" fill="#ffffff"/>'
            '</svg>')
 
 HTML = r"""<!DOCTYPE html>
 <html lang="en"><head>
 <meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1">
-<title>SEC-MNGR · Security Manager</title>
-<link rel="shortcut icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
-<link rel="icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
-<link rel="alternate icon" href="/favicon.ico" type="image/svg+xml">
+<title>KillTheHost - SEC-MNGR</title>
+<link rel="icon" href="/favicon.ico" type="image/svg+xml">
 <style>
 :root{
   --bg:#0d0d0f;--sidebar:#111114;--panel:#17171b;--panel2:#1d1d22;
