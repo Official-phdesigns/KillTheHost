@@ -96,15 +96,18 @@ fi
 # Gtk modules / dbus-launch are installed by launcher.py on start-up
 # (apt, dnf, yum, zypper, pacman). Set KTH_SKIP_GTK_INSTALL=1 to skip.
 
-# ── Linux: quiet browser start-up (Flatpak/Snap browsers can't load host Gtk
-#    modules, so drop them from GTK_MODULES; give the portal a session bus) ──
+# ── Linux: clean browser environment ─────────────────────────────────────────
+# Remove GTK_MODULES entirely — no modules to load means no "Failed to load" warnings.
+# Launcher.py opens browsers with setsid so Flatpak/Snap browsers have no tty to write to.
 if [ "$OS" = "Linux" ]; then
-    if [ -n "${GTK_MODULES:-}" ]; then
-        GTK_MODULES="$(printf '%s' "$GTK_MODULES" | tr ':' '\n' | grep -v -x -e canberra-gtk-module -e pk-gtk-module | paste -sd: -)"
-        if [ -n "$GTK_MODULES" ]; then export GTK_MODULES; else unset GTK_MODULES; fi
-    fi
+    unset GTK_MODULES
+    unset GTK2_MODULES
+    unset GDK_MODULES
     if [ -z "${DBUS_SESSION_BUS_ADDRESS:-}" ] && [ -S "/run/user/$(id -u)/bus" ]; then
         export DBUS_SESSION_BUS_ADDRESS="unix:path=/run/user/$(id -u)/bus"
+    fi
+    if [ -z "${XDG_RUNTIME_DIR:-}" ] && [ -d "/run/user/$(id -u)" ]; then
+        export XDG_RUNTIME_DIR="/run/user/$(id -u)"
     fi
 fi
 
