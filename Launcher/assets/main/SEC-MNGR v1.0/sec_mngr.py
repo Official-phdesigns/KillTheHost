@@ -3063,28 +3063,31 @@ class SecServer(ThreadingHTTPServer):
 
 
 def _open_browser_quiet(url):
-    """Open the dashboard without Gtk/Flatpak-portal chatter on the console.
-    Sandboxed browsers can't load host Gtk modules, so strip them from GTK_MODULES."""
-    env = dict(os.environ)
-    mods = [m for m in env.get("GTK_MODULES", "").split(":")
-            if m and m not in ("canberra-gtk-module", "pk-gtk-module")]
-    if mods:
-        env["GTK_MODULES"] = ":".join(mods)
-    else:
-        env.pop("GTK_MODULES", None)
-    if sys.platform.startswith("linux") and not env.get("DBUS_SESSION_BUS_ADDRESS"):
-        bus = "/run/user/%d/bus" % os.getuid()
-        if os.path.exists(bus):
-            env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=" + bus
-    opener = shutil.which("xdg-open") if sys.platform.startswith("linux") else None
-    if opener:
-        try:
-            subprocess.Popen([opener, url], env=env, stdin=subprocess.DEVNULL,
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                             start_new_session=True)
-            return
-        except OSError:
-            pass
+    """Open the dashboard silently.
+    Uses setsid+xdg-open so Flatpak/Snap browsers have no controlling terminal
+    and cannot write Gtk warnings to /dev/tty. GTK_MODULES is removed entirely."""
+    if sys.platform.startswith("linux"):
+        xdg = shutil.which("xdg-open")
+        if xdg:
+            setsid_bin = shutil.which("setsid")
+            cmd = ([setsid_bin, xdg, url] if setsid_bin else [xdg, url])
+            env = {k: v for k, v in os.environ.items()
+                   if k not in ("GTK_MODULES", "GDK_MODULES", "GTK2_MODULES")}
+            if not env.get("DBUS_SESSION_BUS_ADDRESS"):
+                bus = "/run/user/%d/bus" % os.getuid()
+                if os.path.exists(bus):
+                    env["DBUS_SESSION_BUS_ADDRESS"] = "unix:path=" + bus
+            if not env.get("XDG_RUNTIME_DIR"):
+                xdg_rt = "/run/user/%d" % os.getuid()
+                if os.path.isdir(xdg_rt):
+                    env["XDG_RUNTIME_DIR"] = xdg_rt
+            try:
+                subprocess.Popen(cmd, env=env,
+                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, close_fds=True)
+                return
+            except OSError:
+                pass
     webbrowser.open(url)
 
 

@@ -1118,13 +1118,9 @@ def prepare_gui_env():
       so the Flatpak portal doesn't fall back to the missing `dbus-launch`."""
     if SYSTEM != "Linux":
         return
-    mods = os.environ.get("GTK_MODULES")
-    if mods is not None:
-        kept = [m for m in mods.split(":") if m and m not in GTK_NOISY_MODULES]
-        if kept:
-            os.environ["GTK_MODULES"] = ":".join(kept)
-        else:
-            os.environ.pop("GTK_MODULES", None)
+    # Remove all GTK_MODULES entirely — empty/absent = no modules loaded, no warnings
+    for _var in ("GTK_MODULES", "GDK_MODULES", "GTK2_MODULES"):
+        os.environ.pop(_var, None)
     if not os.environ.get("DBUS_SESSION_BUS_ADDRESS"):
         bus = Path(f"/run/user/{os.getuid()}/bus")
         if bus.exists():
@@ -1140,15 +1136,32 @@ def is_browser_noise(line: str) -> bool:
 
 
 def open_browser_quiet(url: str):
-    """Open url in the default browser without leaking Gtk/portal chatter to the console."""
-    if SYSTEM == "Linux" and shutil.which("xdg-open"):
-        try:
-            subprocess.Popen(["xdg-open", url], stdin=subprocess.DEVNULL,
-                             stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL,
-                             start_new_session=True)
-            return
-        except OSError:
-            pass
+    """Open url in the browser silently.
+    Linux: wraps xdg-open with setsid (new session = no controlling terminal).
+    Without a controlling terminal, Flatpak/Snap browsers cannot write Gtk warnings
+    to /dev/tty. GTK_MODULES is removed entirely so no module-loading is attempted."""
+    if SYSTEM == "Linux":
+        xdg = shutil.which("xdg-open")
+        if xdg:
+            setsid_bin = shutil.which("setsid")
+            cmd = ([setsid_bin, xdg, url] if setsid_bin else [xdg, url])
+            env = {k: v for k, v in os.environ.items()
+                   if k not in ("GTK_MODULES", "GDK_MODULES", "GTK2_MODULES")}
+            if not env.get("DBUS_SESSION_BUS_ADDRESS"):
+                bus = f"/run/user/{os.getuid()}/bus"
+                if os.path.exists(bus):
+                    env["DBUS_SESSION_BUS_ADDRESS"] = f"unix:path={bus}"
+            if not env.get("XDG_RUNTIME_DIR"):
+                xdg_rt = f"/run/user/{os.getuid()}"
+                if os.path.isdir(xdg_rt):
+                    env["XDG_RUNTIME_DIR"] = xdg_rt
+            try:
+                subprocess.Popen(cmd, env=env,
+                                 stdin=subprocess.DEVNULL, stdout=subprocess.DEVNULL,
+                                 stderr=subprocess.DEVNULL, close_fds=True)
+                return
+            except OSError:
+                pass
     webbrowser.open(url)
 
 
