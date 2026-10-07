@@ -77,11 +77,12 @@ SERVICES = {
     "mail_srvr": {"label": "MAIL-SRVR", "port": 6060, "log_dir": HOME / ".mailsrvr"},
     "stax_mngr": {"label": "STAX-MNGR", "port": 6161, "log_dir": HOME / ".staxmngr"},
     "node_mngr": {"label": "NODE-MNGR", "port": 7272, "log_dir": HOME / ".nodemngr"},
-    "sec_mngr":  {"label": "SEC-MNGR",  "port": DEFAULT_PORT, "log_dir": None},
+    "sec_mngr":      {"label": "SEC-MNGR",      "port": DEFAULT_PORT, "log_dir": None},
+    "ldomain3ngin3": {"label": "LDOMAIN-3NGIN3", "port": 8181,         "log_dir": HOME / ".ldomain3ngin3"},
 }
 
-# Standard suite ports (Launcher, SEC-MNGR, NODE-MNGR, DB-3NGIN3, STAX-MNGR, MAIL-SRVR, PHP-MNGR)
-SUITE_DEFAULT_PORTS = frozenset({5000, 8080, 7272, 7734, 6161, 6060, 4280})
+# Standard suite ports (Launcher, SEC-MNGR, NODE-MNGR, DB-3NGIN3, STAX-MNGR, MAIL-SRVR, PHP-MNGR, LDOMAIN-3NGIN3)
+SUITE_DEFAULT_PORTS = frozenset({5000, 8080, 7272, 7734, 6161, 6060, 4280, 8181})
 
 # System / host-management ports that are always trusted — never flagged as suspicious
 # regardless of the user's saved config (Cockpit=9090, pmcd/PCP=44321)
@@ -128,7 +129,8 @@ DEFAULT_SETTINGS = {
     "disk_crit":            97,
     "known_ports": [
         "22", "53", "80", "443", "25", "110", "143", "465", "587", "993", "995",
-        "631", "1025", "8025", "5000", "4280", "7734", "6060", "6161", "7272", "8080",
+        "631", "1025", "8025", "5000", "4280", "7734", "6060", "6161", "7272", "8080", "8181",
+        "5353",  # LDOMAIN-3NGIN3: DNS resolver
         "5432", "3306", "3307", "6379", "27017", "3100-3199", "8100-8199",
         "9090", "44321",  # 9090=Cockpit, 44321=pmcd/PCP (also hardcoded in SYSTEM_TRUSTED_PORTS)
     ],

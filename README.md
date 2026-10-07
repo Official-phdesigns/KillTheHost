@@ -1,6 +1,6 @@
-<h1 align="center">KillTheHost v1.5</h1>
+<h1 align="center">KillTheHost v1.6</h1>
 <p align="center">
-  <img src="https://img.shields.io/badge/Latest-v1.5.0-brightgreen" />
+  <img src="https://img.shields.io/badge/Latest-v1.6.0-brightgreen" />
 </p>
 <br/>
 <p align="center">
@@ -23,8 +23,8 @@
 
 <br/>
 
-> **KillTheHost** brings together **PHP-MNGR**, **DB-3NGIN3**, **MAIL-SRVR**, **STAX-MNGR**, **NODE-MNGR**, and **SEC-MNGR** into one unified workflow —  
-> run your stack locally, manage your databases, host your own email, deploy Docker stacks, manage Node.js apps, lock it all down with 24/7 security monitoring, sync real domains, and go live in a click.
+> **KillTheHost** brings together **PHP-MNGR**, **DB-3NGIN3**, **MAIL-SRVR**, **STAX-MNGR**, **NODE-MNGR**, **SEC-MNGR**, and **LDOMAIN-3NGIN3** into one unified workflow —  
+> run your stack locally, manage your databases, host your own email, deploy Docker stacks, manage Node.js apps, lock it all down with 24/7 security monitoring, map local domains with TLS, sync real domains, and go live in a click.
 
 <br/>
 
@@ -37,6 +37,45 @@
 </div>
 
 <br/>
+
+## 🆕 What's New in v1.6 — LDOMAIN-3NGIN3
+
+> **KillTheHost v1.6 introduces LDOMAIN-3NGIN3**, a Local Domain & Reverse Proxy Manager that gives every local project a real `.local`-style domain name, HTTPS via a self-signed local CA, and a full reverse proxy — all without touching a public DNS provider.
+
+Point `app.dev.local` at your PHP site, your Node.js app, or any local service. LDOMAIN-3NGIN3 handles DNS resolution on your LAN, TLS termination with browser-trusted certificates (once you install the root CA once), and forwards HTTP/HTTPS traffic through raw TCP sockets — no nginx, no Caddy, no external tools. SEC-MNGR integration ships built-in: access logs go to `~/.ldomain3ngin3/access_logs.jsonl` in the unified format, and banned IPs from `~/.secmngr/blocklist.txt` are enforced at the proxy layer.
+
+### 🌐 LDOMAIN-3NGIN3 Highlights
+
+| Feature | Details |
+|---|---|
+| **Local DNS resolver** | LAN UDP DNS server on `:5353` — responds to A-record queries for registered domains |
+| **Reverse proxy** | HTTP on `:80` (fallback `:8180`) and HTTPS on `:443` (fallback `:8143`) — raw TCP sockets, WebSocket-capable |
+| **TLS via local CA** | Generates a root CA and per-domain certificates with SAN extensions using `openssl` — install the CA once per device |
+| **Hosts-file adapter** | Writes entries to `/etc/hosts` for single-machine resolution without a DNS server |
+| **SEC-MNGR integration** | Writes access logs in SEC-MNGR's unified JSONL format; enforces SEC-MNGR IP bans before forwarding |
+| **Per-domain health checks** | Background TCP reachability checks for every registered upstream |
+| **Integration API** | `POST /api/integrate` — other managers can register/remove domains programmatically |
+| **Browser dashboard** | Management UI at `http://localhost:8181` with dark theme matching the KillTheHost suite |
+
+```
+  Browser / curl  ──►  https://app.dev.local
+                              │
+                    LDOMAIN-3NGIN3 (:443 / :8143)
+                         TLS termination
+                              │
+                    reverse proxy  ──►  banned? → 403  (SEC-MNGR blocklist)
+                              │
+                    http://localhost:4280  (your PHP-MNGR site, Node.js app, etc.)
+
+  LAN device   ──►  DNS query  ──►  LDOMAIN-3NGIN3 (:5353)  ──►  A record response
+  hosts file   ──►  127.0.0.1  (single-machine, no DNS server needed)
+```
+
+> 👉 **[Full LDOMAIN-3NGIN3 Reference ↓](#-ldomain-3ngin3-reference)**
+
+<br/>
+
+---
 
 ## 🆕 What's New in v1.5 — SEC-MNGR
 
@@ -123,13 +162,14 @@ KillTheHost is a bundle of six open-source, single-file Python tools unified by 
 
 | Tool | Version | Purpose |
 |---|---|---|
-| ⚡ **Launcher** | `v1.5` | Unified browser UI to start, stop, and monitor all tools — zero dependencies |
+| ⚡ **Launcher** | `v1.6` | Unified browser UI to start, stop, and monitor all tools — zero dependencies |
 | 🐘 **PHP-MNGR** | `v2.5` | Local & Public PHP project manager — spin up, manage, and publish PHP sites via Docker |
 | 🗄️ **DB-3NGIN3** | `v1.2` | Local database service manager — PostgreSQL, MySQL, MariaDB, Redis, MongoDB |
 | ✉️ **MAIL-SRVR** | `v1.0` | Self-hosted email server — send, receive, IMAP, DKIM, SPF, DMARC, and a full browser mail client |
 | 🐳 **STAX-MNGR** | `v1.0` | Docker stack manager — deploy and manage pre-configured application stacks with one click |
 | 🟢 **NODE-MNGR** | `v1.0` | Node.js app manager — deploy and manage React, Next.js, Vite, and Node.js projects |
 | 🛡️ **SEC-MNGR** | `v1.0` | Security manager — unified access logs, IP bans/allowlist, Fail2Ban-style detection, 24/7 host monitoring (port 8080) *(New in v1.5)* |
+| 🌐 **LDOMAIN-3NGIN3** | `v1.0` | Local domain & reverse proxy manager — local DNS, TLS via self-signed CA, HTTP/HTTPS proxy, hosts-file adapter, SEC-MNGR integration (port 8181) *(New in v1.6)* |
 
 Together, they connect to your **Namecheap** domains and route traffic through **Cloudflare Tunnels** — putting your localhost on the public internet without a single line of server config.
 
@@ -142,13 +182,14 @@ Together, they connect to your **Namecheap** domains and route traffic through *
 <br/>
 
 ```
-  localhost:5000  ──►  Launcher UI  (control panel for all tools)
-  localhost:4280  ──►  PHP-MNGR    ──►  Cloudflare Tunnel  ──►  yoursite.com
-  localhost:7734  ──►  DB-3NGIN3   ──►  PostgreSQL · MySQL · Redis · MongoDB
-  localhost:6060  ──►  MAIL-SRVR   ──►  SMTP/IMAP  ──►  mail.yourdomain.com
-  localhost:6161  ──►  STAX-MNGR   ──►  Docker Stacks  ──►  VaultWarden · Nextcloud · Gitea…
-  localhost:7272  ──►  NODE-MNGR   ──►  Node.js Apps  ──►  React · Next.js · Vite…
-  localhost:8080  ──►  SEC-MNGR    ──►  Access Logs · IP/CIDR Bans · Fail2Ban Rules  ──►  UFW / iptables
+  localhost:5000  ──►  Launcher UI      (control panel for all tools)
+  localhost:4280  ──►  PHP-MNGR         ──►  Cloudflare Tunnel  ──►  yoursite.com
+  localhost:7734  ──►  DB-3NGIN3        ──►  PostgreSQL · MySQL · Redis · MongoDB
+  localhost:6060  ──►  MAIL-SRVR        ──►  SMTP/IMAP  ──►  mail.yourdomain.com
+  localhost:6161  ──►  STAX-MNGR        ──►  Docker Stacks  ──►  VaultWarden · Nextcloud · Gitea…
+  localhost:7272  ──►  NODE-MNGR        ──►  Node.js Apps  ──►  React · Next.js · Vite…
+  localhost:8080  ──►  SEC-MNGR         ──►  Access Logs · IP/CIDR Bans · Fail2Ban Rules  ──►  UFW / iptables
+  localhost:8181  ──►  LDOMAIN-3NGIN3   ──►  Local Domains · TLS · Reverse Proxy · LAN DNS
 ```
 
 <br/>
@@ -256,8 +297,10 @@ KillTheHost/
             │   └── staxmngr.py
             ├── NODE-MNGR v1.0/
             │   └── nodemngr.py
-            └── SEC-MNGR v1.0/          ← New in v1.5
-                └── sec_mngr.py         ← Security manager (port 8080)
+            ├── SEC-MNGR v1.0/          ← New in v1.5
+            │   └── sec_mngr.py         ← Security manager (port 8080)
+            └── LDOMAIN-3NGIN3 v1.0/    ← New in v1.6
+                └── ldomain3ngin3.py    ← Local domain & reverse proxy manager (port 8181)
 ```
 
 <br/>
@@ -646,6 +689,102 @@ curl -X POST http://127.0.0.1:8080/api/bans \
 
 ---
 
+## 🌐 LDOMAIN-3NGIN3 Reference
+
+LDOMAIN-3NGIN3 (`Launcher/assets/main/LDOMAIN-3NGIN3 v1.0/ldomain3ngin3.py`) is a single Python 3.8+ file that uses only the standard library. Start it from the launcher, or run it directly:
+
+```bash
+python3 "Launcher/assets/main/LDOMAIN-3NGIN3 v1.0/ldomain3ngin3.py"           # http://localhost:8181
+python3 "Launcher/assets/main/LDOMAIN-3NGIN3 v1.0/ldomain3ngin3.py" --port 8181 --no-browser
+# Environment overrides: LDOMAIN_PORT, LDOMAIN_NO_BROWSER=1
+```
+
+> **Note:** Binding the reverse proxy to `:80` and `:443` requires root or passwordless `sudo`. Without it, LDOMAIN-3NGIN3 falls back to `:8180` (HTTP) and `:8143` (HTTPS) automatically.
+
+### Features
+
+| Area | What it does |
+|---|---|
+| **Domain registry** | Stores all registered domains in `~/.ldomain3ngin3/registry.json` — name, upstream host/port, TLS on/off, hosts-file on/off |
+| **Reverse proxy** | Raw TCP socket proxy for HTTP (`:80` / `:8180`) and HTTPS (`:443` / `:8143`). Parses the `Host` header to route to the right upstream. WebSocket connections are tunnelled via `select`. |
+| **TLS termination** | Wraps the client-facing socket with `ssl.SSLContext` using a per-domain certificate. Upstream connections are plain HTTP, so your backend needs no TLS config. |
+| **Local CA** | On first start, generates a root CA (`~/.ldomain3ngin3/ca/ca.key` + `ca.crt`) using `openssl`. Issues per-domain leaf certs with SAN extensions. Install the CA in your browser or OS once and all local HTTPS works. |
+| **LAN DNS** | A pure-Python UDP server on `:5353`. Responds to A-record queries for registered domains with `127.0.0.1`. Other queries are forwarded to the system resolver. |
+| **Hosts-file adapter** | Adds or removes `127.0.0.1 yourdomain.local` lines in `/etc/hosts` (Linux/macOS) or `C:\Windows\System32\drivers\etc\hosts` (Windows), inside managed `# LDOMAIN-3NGIN3 BEGIN/END` markers. |
+| **SEC-MNGR blocklist** | Reads `~/.secmngr/blocklist.txt` every 30 s. Any IP in the blocklist gets a `403 Forbidden` before the request is forwarded. |
+| **Access logging** | Appends one JSONL entry per request to `~/.ldomain3ngin3/access_logs.jsonl` in SEC-MNGR's unified format: `ts`, `timestamp`, `ip`, `method`, `path`, `status`, `user_agent`, `service`, `event_type`, `source`, `detail`. |
+| **Health checks** | A background thread checks each upstream's TCP port every 60 s and marks the domain UP or DOWN in the dashboard. |
+| **Integration API** | `POST /api/integrate` — accepts `{"action":"add","domain":"…","upstream_host":"…","upstream_port":…}` or `action:"remove"`. Lets PHP-MNGR, NODE-MNGR, and any other tool register domains automatically. |
+| **Dashboard** | Dark-theme browser UI at `http://localhost:8181` — domain list with health status, quick-add form, CA install instructions, and log viewer. |
+
+### Port Assignments
+
+| Service | Port | Fallback |
+|---|---|---|
+| LDOMAIN-3NGIN3 management UI | 8181 | — |
+| HTTP reverse proxy | 80 | 8180 (if :80 is unavailable) |
+| HTTPS reverse proxy | 443 | 8143 (if :443 is unavailable) |
+| LAN DNS resolver | 5353 (UDP) | — |
+
+### Setting Up HTTPS (CA Installation)
+
+LDOMAIN-3NGIN3 generates its own root CA on first start. Install it once per device:
+
+**Linux (system-wide):**
+```bash
+sudo cp ~/.ldomain3ngin3/ca/ca.crt /usr/local/share/ca-certificates/ldomain3ngin3.crt
+sudo update-ca-certificates
+```
+
+**macOS:**
+```bash
+sudo security add-trusted-cert -d -r trustRoot -k /Library/Keychains/System.keychain ~/.ldomain3ngin3/ca/ca.crt
+```
+
+**Windows:**
+```powershell
+certutil -addstore -f "ROOT" "$env:USERPROFILE\.ldomain3ngin3\ca\ca.crt"
+```
+
+**Firefox (all platforms):** Preferences → Privacy & Security → View Certificates → Authorities → Import → select `~/.ldomain3ngin3/ca/ca.crt` → check "Trust this CA to identify websites".
+
+**iOS:** AirDrop or email `ca.crt` to the device → Settings → General → VPN & Device Management → install → Settings → General → About → Certificate Trust Settings → enable.
+
+**Android:** Settings → Security → Install from storage → select `ca.crt`.
+
+### Using the Hosts-File Adapter
+
+Enable **Hosts file** on a domain in the dashboard to write `127.0.0.1 yourdomain.local` to `/etc/hosts`. This is the simplest option for single-machine use — no DNS server or LAN configuration needed.
+
+> **Tip:** Enable both hosts-file and DNS so local requests resolve instantly and LAN devices can use the DNS server.
+
+### REST API
+
+| Method | Endpoint | Description |
+|---|---|---|
+| GET | `/api/domains` | List all registered domains with health status |
+| POST | `/api/domains` | Add a domain `{"domain":"…","upstream_host":"…","upstream_port":…,"tls":true,"hosts":true}` |
+| DELETE | `/api/domains/{domain}` | Remove a domain and clean up certs + hosts entries |
+| GET | `/api/health` | Per-domain health check results |
+| GET | `/api/logs?limit=100` | Recent access log entries |
+| POST | `/api/integrate` | Integration API for other managers — add/remove domains programmatically |
+| GET | `/api/ca` | CA certificate info and install instructions |
+
+### Data Locations
+
+| Item | Path |
+|---|---|
+| Domain registry | `~/.ldomain3ngin3/registry.json` |
+| Access log (JSONL, SEC-MNGR format) | `~/.ldomain3ngin3/access_logs.jsonl` |
+| Root CA key | `~/.ldomain3ngin3/ca/ca.key` |
+| Root CA certificate | `~/.ldomain3ngin3/ca/ca.crt` |
+| Per-domain certificates | `~/.ldomain3ngin3/certs/<domain>.crt` |
+| Per-domain private keys | `~/.ldomain3ngin3/certs/<domain>.key` |
+
+<br/>
+
+---
+
 ## 🗺️ Survive Reboots
 
 ```bash
@@ -693,6 +832,7 @@ systemctl --user enable --now killthehost
 - [x] Node.js app manager with nvm version switching and Cloudflare tunnel support (NODE-MNGR v1.1)
 - [x] Additional domain registrar support (GoDaddy, Porkbun, Cloudflare Registrar…)
 - [x] Security manager with unified access logging, IP/CIDR bans, Fail2Ban-style detection and 24/7 monitoring (SEC-MNGR v1.0) ← **New in v1.5**
+- [x] Local domain & reverse proxy manager with local CA, TLS, LAN DNS, hosts-file adapter and SEC-MNGR integration (LDOMAIN-3NGIN3 v1.0) ← **New in v1.6**
 - [ ] Multi-domain email support in MAIL-SRVR
 - [ ] MAIL-SRVR relay/smarthost option for providers that block port 25
 - [ ] NODE-MNGR: GitHub auto-deploy / webhook triggers
@@ -705,6 +845,12 @@ systemctl --user enable --now killthehost
 ## 🖥️ Screenshots
 
 <div align="center">
+
+### 🌐 LDOMAIN-3NGIN3 — Local Domain & Reverse Proxy Manager *(New in v1.6)*
+
+> *Screenshot pending — run `python3 "Launcher/assets/main/LDOMAIN-3NGIN3 v1.0/ldomain3ngin3.py"` and open `http://localhost:8181`*
+
+<br/>
 
 ### ⚡ KillTheHost Launcher — Main Control Panel
 

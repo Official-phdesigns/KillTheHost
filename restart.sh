@@ -6,7 +6,7 @@
 #  port is free, then starts the launcher again.
 #
 #  Usage:  ./restart.sh
-#  AGPL-3.0  |  KillTheHost Launcher v1.5
+#  AGPL-3.0  |  KillTheHost Launcher v1.6
 # ============================================================
 
 ROOT="$(cd "$(dirname "$0")" && pwd)"

@@ -4,7 +4,7 @@
 ::  Place this file in:  KillTheHost\
 ::  Double-click or run from any terminal.
 ::
-::  AGPL-3.0  |  KillTheHost Launcher v1.5 
+::  AGPL-3.0  |  KillTheHost Launcher v1.6 
 :: ============================================================
 setlocal EnableDelayedExpansion
 

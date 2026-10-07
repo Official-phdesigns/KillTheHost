@@ -9,7 +9,7 @@
 #  services added to the launcher are stopped automatically.
 #
 #  Usage:  ./stop.sh
-#  AGPL-3.0  |  KillTheHost Launcher v1.5
+#  AGPL-3.0  |  KillTheHost Launcher v1.6
 # ============================================================
 
 SCRIPT_DIR="$(cd "$(dirname "${BASH_SOURCE[0]}")" && pwd)"

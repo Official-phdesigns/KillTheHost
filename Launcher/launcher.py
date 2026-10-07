@@ -1,7 +1,7 @@
 #!/usr/bin/env python3
 """
 ╔════╗                                        ╔════╗
-║      KillTheHost  —  Unified Launcher v1.5       ║
+║      KillTheHost  —  Unified Launcher v1.6       ║
 ║                                                  ║
 ║      Located at KillTheHost/Launcher/assets/     ║
 ║   Run via launch.bat / launch.sh in repo root    ║
@@ -38,7 +38,7 @@ from urllib.parse import urlparse
 LAUNCHER_PORT = 5000
 SYSTEM        = platform.system()          # "Linux" | "Darwin" | "Windows"
 BASE          = Path(__file__).parent.resolve()
-VERSION       = "1.5"
+VERSION       = "1.6"
 
 def _get_docker_version() -> str:
     """Return Docker version string, or 'Not found' if unavailable."""
@@ -116,6 +116,16 @@ SERVICES = {
         "script"   : "sec_mngr.py",
         "port"     : 8080,
         "color"    : "#DC2626",
+        "needs_sg" : False,
+    },
+    "ldomain3ngin3": {
+        "label"    : "LDOMAIN-3NGIN3",
+        "subtitle" : "Local Domain & Reverse Proxy Manager",
+        "version"  : "v1.0",
+        "dir"      : "assets/main/LDOMAIN-3NGIN3 v1.0",
+        "script"   : "ldomain3ngin3.py",
+        "port"     : 8181,
+        "color"    : "#10b981",
         "needs_sg" : False,
     },
 }
@@ -767,6 +777,7 @@ HTML_TEMPLATE = """<!DOCTYPE html>
         <button class="fbtn"        data-f="stax_mngr" onclick="setFilter('stax_mngr',this)">STAX-MNGR</button>
         <button class="fbtn"        data-f="node_mngr" onclick="setFilter('node_mngr',this)">NODE-MNGR</button>
         <button class="fbtn"        data-f="sec_mngr"  onclick="setFilter('sec_mngr',this)">SEC-MNGR</button>
+        <button class="fbtn"        data-f="ldomain3ngin3" onclick="setFilter('ldomain3ngin3',this)">LDOMAIN-3NGIN3</button>
       </div>
       <button class="cbtn" onclick="clearLog()">Clear All</button>
     </div>
@@ -861,7 +872,7 @@ async function svcAction(key, action) {
 }
 
 async function startAll() {
-  const ordered = ["sec_mngr", "php_mngr", "db_3ngin3", "mail_srvr", "stax_mngr", "node_mngr"];
+  const ordered = ["sec_mngr", "php_mngr", "db_3ngin3", "mail_srvr", "stax_mngr", "node_mngr", "ldomain3ngin3"];
   for (let i = 0; i < ordered.length; i++) {
     if (!SERVICES[ordered[i]]) continue;
     await api("/api/" + ordered[i] + "/start", "POST");
@@ -877,6 +888,7 @@ function openAllPanels() {
   window.open("http://localhost:6161", "_blank");
   window.open("http://localhost:7272", "_blank");
   window.open("http://localhost:8080", "_blank");
+  window.open("http://localhost:8181", "_blank");
 }
 async function stopAll() {
   for (const k of Object.keys(SERVICES)) await api(`/api/${k}/stop`, "POST");

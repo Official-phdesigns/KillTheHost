@@ -5,7 +5,7 @@ REM  Stops the launcher (port 5000) AND every suite service
 REM  listed in Launcher\launcher.py SERVICES. Ports are read
 REM  from launcher.py, so new services are stopped automatically.
 REM
-REM  AGPL-3.0  |  KillTheHost Launcher v1.5
+REM  AGPL-3.0  |  KillTheHost Launcher v1.6
 REM ============================================================
 setlocal EnableDelayedExpansion
 
