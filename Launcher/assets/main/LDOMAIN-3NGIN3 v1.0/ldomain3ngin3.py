@@ -1218,15 +1218,17 @@ DASHBOARD_HTML = r"""<!DOCTYPE html>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1">
 <title>LDOMAIN-3NGIN3 — Local Domain Manager</title>
+<link rel="shortcut icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
+<link rel="icon" href="https://www.phdesigns.net/img/favicon.ico" type="image/x-icon">
 <style>
 *,*::before,*::after{box-sizing:border-box;margin:0;padding:0}
 :root{
-  --bg:#0d0d0f;--sidebar:#111114;--card:#18181b;--card-hover:#1f1f23;
-  --border:#27272a;--text:#f4f4f5;--dim:#a1a1aa;--muted:#52525b;
+  --bg:#212121;--sidebar:#2d2d2d;--card:#2d2d2d;--card-hover:#353535;
+  --card-dk:#1a1a1a;--border:#404040;--text:#ececec;--dim:#8e8ea0;--muted:#565869;
   --teal:#10b981;--teal-dim:#064e3b;--pink:#e879a8;
   --red:#ef4444;--red-dim:#450a0a;--amber:#f59e0b;
   --ok:#10b981;--warn:#f59e0b;--crit:#ef4444;
-  --log-bg:#09090b;--mono:'Menlo','Consolas','Courier New',monospace;
+  --log-bg:#1a1a1a;--mono:'Menlo','Consolas','Courier New',monospace;
 }
 body{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-serif;
   background:var(--bg);color:var(--text);min-height:100vh;display:flex;flex-direction:column;font-size:14px;line-height:1.5;}
@@ -1235,9 +1237,11 @@ body{font-family:ui-sans-serif,-apple-system,BlinkMacSystemFont,'Segoe UI',sans-
 header{background:var(--sidebar);border-bottom:1px solid var(--border);padding:12px 22px;
   display:flex;align-items:center;justify-content:space-between;gap:12px;flex-wrap:wrap;}
 .brand{display:flex;align-items:center;gap:10px}
-.brand-icon{width:28px;height:28px;border-radius:8px;
-  background:linear-gradient(135deg,#10b981,#3b82f6);
-  display:flex;align-items:center;justify-content:center;font-size:14px;font-weight:700;color:#fff;flex-shrink:0}
+.brand-icon{width:27px;height:27px;border-radius:7px;
+  background:linear-gradient(145deg,#ff56b9 0%,#ff4fb3 72%,#c86bff 100%);
+  display:flex;align-items:center;justify-content:center;
+  box-shadow:inset 0 0 0 1px rgba(255,255,255,0.14);
+  flex-shrink:0;}
 .brand-name{font-size:16px;font-weight:700;letter-spacing:-0.3px}
 .brand-name span{color:var(--teal)}
 .brand-sub{font-size:11px;color:var(--muted);margin-top:1px}
@@ -1313,7 +1317,7 @@ pre{background:var(--log-bg);border:1px solid var(--border);border-radius:8px;
 .notice.info{background:rgba(59,130,246,.07);border-color:rgba(59,130,246,.2)}
 .domain-actions{display:flex;gap:6px;flex-wrap:wrap}
 #toast{position:fixed;bottom:24px;right:24px;padding:10px 18px;border-radius:8px;
-  font-size:13px;font-weight:600;color:#fff;background:#18181b;border:1px solid var(--border);
+  font-size:13px;font-weight:600;color:#fff;background:#2d2d2d;border:1px solid var(--border);
   opacity:0;transition:opacity .25s;z-index:999;pointer-events:none}
 #toast.show{opacity:1}
 footer{text-align:center;padding:9px;font-size:11px;color:var(--muted);
@@ -1326,7 +1330,7 @@ footer a:hover{color:var(--teal)}
 <body>
 <header>
   <div class="brand">
-    <div class="brand-icon">&#127760;</div>
+    <div class="brand-icon"><span style="color:#f4f4f5;font-size:11px;font-weight:700;font-family:Menlo,Consolas,monospace;letter-spacing:-0.5px;">&gt;_</span></div>
     <div>
       <div class="brand-name">LDOMAIN<span>-3NGIN3</span></div>
       <div class="brand-sub">Local Domain &amp; Reverse Proxy Manager &mdash; v%%VERSION%%</div>
