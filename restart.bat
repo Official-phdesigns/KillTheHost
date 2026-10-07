@@ -5,7 +5,7 @@ REM  Stops the launcher AND anything holding a suite port
 REM  (duplicates / leftovers from earlier runs), then starts
 REM  the launcher again.
 REM
-REM  AGPL-3.0  |  KillTheHost Launcher v1.5
+REM  AGPL-3.0  |  KillTheHost Launcher v1.6
 REM ============================================================
 
 echo [KillTheHost] Restarting launcher...
